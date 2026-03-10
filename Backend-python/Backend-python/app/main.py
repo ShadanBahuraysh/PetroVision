@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.api.analysis_routes import router as analysis_router
+
+app = FastAPI(title="PetroVision API")
+
+app.include_router(analysis_router)
+
 
 @app.get("/")
-def home():
-    return {"message": "PetroVision backend running"}
+def root():
+    return {"message": "PetroVision backend is running"}
