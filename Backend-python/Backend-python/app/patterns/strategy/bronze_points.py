@@ -1,4 +1,4 @@
-from point_strategy import PointStrategy
+from patterns.strategy.point_strategy import PointStrategy
 
 class BronzePoints(PointStrategy):
     def calculate_points(self, amount):

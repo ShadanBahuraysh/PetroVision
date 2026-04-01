@@ -1,28 +1,18 @@
-from bronze_points import BronzePoints
-from silver_points import SilverPoints
-from gold_points import GoldPoints
+from patterns.strategy.gold_points import GoldPoints
+from patterns.strategy.silver_points import SilverPoints
+from patterns.strategy.bronze_points import BronzePoints
 
 class PointCalculation:
-    def __init__(self, strategy=None):
-        self.strategy = strategy
+    def __init__(self):
+        self.strategy = None
 
-    def set_strategy(self, strategy):
-        self.strategy = strategy
-
-    def select_tier(self, tier):
-        if tier is None:
-            return BronzePoints()
-
-        tier = tier.lower()
-
-        if tier == "silver":
-            return SilverPoints()
-        elif tier == "gold":
-            return GoldPoints()
+    def set_strategy_by_tier(self, tier):
+        if tier == "Gold":
+            self.strategy = GoldPoints()
+        elif tier == "Silver":
+            self.strategy = SilverPoints()
         else:
-            return BronzePoints()
+            self.strategy = BronzePoints()
 
     def calculate(self, amount):
-        if self.strategy is None:
-            return 0
         return self.strategy.calculate_points(amount)
