@@ -23,3 +23,4 @@ print("Current points:", account.current_points)
 success = service.redeem_points(account, 50)
 print("Redeem success:", success)
 print("Current points after redeem:", account.current_points)
+#/
