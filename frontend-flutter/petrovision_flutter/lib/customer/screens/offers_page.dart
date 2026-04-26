@@ -1,42 +1,59 @@
 import 'package:flutter/material.dart';
+import '../../services/loyalty_api_service.dart';
 
-class OffersPage extends StatelessWidget {
+class OffersPage extends StatefulWidget {
   const OffersPage({super.key});
 
+  @override
+  State<OffersPage> createState() => _OffersPageState();
+}
+
+class _OffersPageState extends State<OffersPage> {
   static const primaryNavy = Color(0xFF1A2E35);
   static const accentBlue = Color(0xFF4195AF);
   static const scaffoldBg = Color(0xFFFBFBFB);
 
-  final List<Map<String, dynamic>> promoOffers = const [
-    {
-      "title": "Free Coffee with Super 91",
-      "desc": "Refuel for 50 SAR or more and get a free Espresso from Primo.",
-      "icon": Icons.coffee_rounded,
-      "tag": "Limited Time",
-      "gradient": [Color(0xFF1A2E35), Color(0xFF2D4F5E)],
-    },
-    {
-      "title": "Friday Wash Offer",
-      "desc": "Get 20% off on Full Wash every Friday before 12 PM.",
-      "icon": Icons.local_car_wash_rounded,
-      "tag": "Every Friday",
-      "gradient": [Color(0xFF4195AF), Color(0xFF5BB8D4)],
-    },
-    {
-      "title": "Petromin Express Deal",
-      "desc": "Change your oil and get a free 10-point safety checkup.",
-      "icon": Icons.build_rounded,
-      "tag": "Exclusive",
-      "gradient": [Color(0xFF1A2E35), Color(0xFF4195AF)],
-    },
-    {
-      "title": "Double Points Weekend",
-      "desc": "Earn 2x points on all snacks and drinks this weekend.",
-      "icon": Icons.stars_rounded,
-      "tag": "Weekend Only",
-      "gradient": [Color(0xFF4195AF), Color(0xFF1A2E35)],
-    },
-  ];
+  List<dynamic> offers = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOffers();
+  }
+
+  Future<void> _loadOffers() async {
+    final data = await LoyaltyApiService.getAllOffers();
+    setState(() {
+      offers = data;
+      isLoading = false;
+    });
+  }
+
+  List<Color> _getGradient(String offerType) {
+    switch (offerType) {
+      case "Fuel Cashback":
+        return [const Color(0xFF1A2E35), const Color(0xFF2D4F5E)];
+      case "Coffee Combo":
+        return [const Color(0xFF4195AF), const Color(0xFF5BB8D4)];
+      case "Free Car Wash":
+        return [const Color(0xFF1A2E35), const Color(0xFF4195AF)];
+      case "Weekend Bonus":
+        return [const Color(0xFF4195AF), const Color(0xFF1A2E35)];
+      default:
+        return [const Color(0xFF1A2E35), const Color(0xFF4195AF)];
+    }
+  }
+
+  IconData _getIcon(String offerType) {
+    switch (offerType) {
+      case "Fuel Cashback": return Icons.local_gas_station_rounded;
+      case "Coffee Combo": return Icons.coffee_rounded;
+      case "Free Car Wash": return Icons.local_car_wash_rounded;
+      case "Weekend Bonus": return Icons.stars_rounded;
+      default: return Icons.card_giftcard_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,141 +62,89 @@ class OffersPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "Special Offers",
-          style: TextStyle(
-            color: primaryNavy,
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
-            letterSpacing: 0.5,
-          ),
+          style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w800, fontSize: 16),
         ),
         backgroundColor: scaffoldBg,
         elevation: 0,
         centerTitle: true,
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            itemCount: promoOffers.length,
-            itemBuilder: (context, index) {
-              return _OfferCard(offer: promoOffers[index]);
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OfferCard extends StatelessWidget {
-  final Map<String, dynamic> offer;
-  const _OfferCard({required this.offer});
-
-  @override
-  Widget build(BuildContext context) {
-    final gradientColors = offer['gradient'] as List<Color>;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      height: 150,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: gradientColors[0].withOpacity(0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            // أيقونة
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                offer['icon'] as IconData,
-                color: Colors.white,
-                size: 26,
-              ),
-            ),
-
-            const SizedBox(width: 16),
-
-            // النص
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Tag
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      offer['tag'] as String,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 10,
-                        letterSpacing: 0.5,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : offers.isEmpty
+              ? const Center(child: Text("No offers available"))
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  itemCount: offers.length,
+                  itemBuilder: (context, index) {
+                    final offer = offers[index];
+                    final offerType = offer["offer_type"] ?? "";
+                    final gradient = _getGradient(offerType);
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      height: 150,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: gradient,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: gradient[0].withOpacity(0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    offer['title'] as String,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17,
-                      color: Colors.white,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    offer['desc'] as String,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-/*
-            // سهم
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.white.withOpacity(0.5),
-              size: 16,
-            ),
-            */
-          ],
-        ),
-      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(_getIcon(offerType), color: Colors.white, size: 26),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      offer["offer_id"] ?? "",
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 10),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    offerType,
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Colors.white),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Earn ${offer["earn_points"]} pts • Redeem ${offer["redeem_points"]} pts",
+                                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }
