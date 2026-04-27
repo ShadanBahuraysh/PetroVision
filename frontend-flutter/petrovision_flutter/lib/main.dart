@@ -20,7 +20,7 @@ class PetroVisionApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PetroVision',
-      //initialRoute: '/',
+      //initialRoute: '/dashboard_screen',
 
       initialRoute: '/welcome',
 

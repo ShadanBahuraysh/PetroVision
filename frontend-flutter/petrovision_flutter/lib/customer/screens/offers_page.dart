@@ -60,6 +60,7 @@ class _OffersPageState extends State<OffersPage> {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
+          automaticallyImplyLeading: false, // ← أضف هذا
         title: const Text(
           "Special Offers",
           style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w800, fontSize: 16),

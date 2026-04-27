@@ -9,6 +9,7 @@ import 'earn_points_screen.dart';
 import 'package:r/auth/welcome_screen.dart'; 
 import 'about_us_screen.dart';
 import 'terms_conditions_screen.dart';
+import '../../services/loyalty_api_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -190,8 +191,39 @@ _drawerItem(Icons.info_outline_rounded, "About Us", () {
   }
 }
 
-class HomeMainContent extends StatelessWidget {
+class HomeMainContent extends StatefulWidget {
   const HomeMainContent({super.key});
+
+  @override
+  State<HomeMainContent> createState() => _HomeMainContentState();
+}
+
+class _HomeMainContentState extends State<HomeMainContent> {
+  int _points = 0;
+  String _tier = "Bronze";
+  int _nextTarget = 1000;
+  String _nextTier = "Silver";
+  bool _isLoading = true;
+
+  final String userId = "U-0003"; // نفس الـ userId في LoyaltyDashboardScreen
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final points = await LoyaltyApiService.getPoints(userId);
+    final membership = await LoyaltyApiService.getMembership(userId);
+    setState(() {
+      _points = points;
+      _tier = membership?["tier"] ?? "Bronze";
+      _nextTarget = _tier == "Gold" ? 2000 : 1000;
+      _nextTier = _tier == "Bronze" ? "Silver" : "Gold";
+      _isLoading = false;
+    });
+  }
 
   // دالة إظهار الباركود في منتصف الشاشة
   void _showBarcodePay(BuildContext context) {
@@ -309,36 +341,53 @@ class HomeMainContent extends StatelessWidget {
   }
 
   Widget _buildPointsCard() {
-    const Color accentBlue = Color(0xFF4195AF);
-    return Column(
-      children: const [
-        Text("750", style: TextStyle(color: accentBlue, fontWeight: FontWeight.w900, fontSize: 22
-        )),
-        Text("POINTS", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
-      ],
-    );
-  }
-
-  Widget _buildMembershipCard() {
-    const Color accentBlue = Color(0xFF4195AF);
-    return SizedBox(
-      width: 300,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("BRONZE STATUS", style: TextStyle(color: Colors.black54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
-          const SizedBox(height: 6),
-          const Text("750 / 1,000", style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900)),
-          const Text("Points to Silver Tier", style: TextStyle(color: Colors.black45, fontSize: 14)),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(value: 0.75, backgroundColor: Colors.grey.shade200, color: accentBlue, minHeight: 8),
-          ),
-        ],
+  const Color accentBlue = Color(0xFF4195AF);
+  return Column(
+    children: [
+      Text(
+        _isLoading ? "..." : "$_points",
+        style: const TextStyle(color: accentBlue, fontWeight: FontWeight.w900, fontSize: 22),
       ),
-    );
-  }
+      const Text("POINTS", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
+    ],
+  );
+}
+
+Widget _buildMembershipCard() {
+  const Color accentBlue = Color(0xFF4195AF);
+  double progress = (_points / _nextTarget).clamp(0.0, 1.0);
+  return SizedBox(
+    width: 300,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "${_tier.toUpperCase()} STATUS",
+          style: const TextStyle(color: Colors.black54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          "$_points / $_nextTarget",
+          style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        Text(
+          "Points to $_nextTier Tier",
+          style: const TextStyle(color: Colors.black45, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.grey.shade200,
+            color: accentBlue,
+            minHeight: 8,
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
 Widget _buildMapCard(BuildContext context) {
   return ClipRRect(
@@ -349,7 +398,7 @@ Widget _buildMapCard(BuildContext context) {
       child: Stack(
         children: [
           // معاينة الخريطة
-const FullMapScreen(isPreview: true),
+const FullMapScreen(),
           
           // gradient overlay
           Container(

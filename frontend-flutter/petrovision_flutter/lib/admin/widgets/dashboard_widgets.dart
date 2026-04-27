@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_models.dart';
 import 'interactive_widgets.dart';
-import 'dart:ui_web' as ui;
-import 'dart:html' as html;
+import 'package:webview_flutter/webview_flutter.dart';
 
 class SectionCard extends StatelessWidget {
   final Widget child;
@@ -451,7 +450,7 @@ class _MapCanvas extends StatefulWidget {
 }
 
 class _MapCanvasState extends State<_MapCanvas> {
-  final String _viewId = 'admin-map-${DateTime.now().millisecondsSinceEpoch}';
+  late final WebViewController _controller;
 
   @override
   void initState() {
@@ -462,69 +461,40 @@ class _MapCanvasState extends State<_MapCanvas> {
   void _registerMap() {
     const apiKey = 'AIzaSyDjdMGkREctRQN52HyAOaC6PS04H-j47Vs';
     final mapHtml = '''
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>body,html,#map{margin:0;padding:0;width:100%;height:100%;}</style>
-      </head>
+      <!DOCTYPE html><html>
+      <head><style>body,html,#map{margin:0;padding:0;width:100%;height:100%;}</style></head>
       <body>
         <div id="map"></div>
         <script>
           async function initMap() {
-            const res = await fetch('http://localhost:8000/stations');
+            const res = await fetch('http://10.0.2.2:8000/stations');
             const stations = await res.json();
-
             var map = new google.maps.Map(document.getElementById('map'), {
-              center: {lat: 24.7136, lng: 46.6753},
-              zoom: 5,
-              mapTypeControl: false,
-              streetViewControl: false,
+              center: {lat: 24.7136, lng: 46.6753}, zoom: 5,
+              mapTypeControl: false, streetViewControl: false,
             });
-
-            stations.forEach(function(station) {
-              var marker = new google.maps.Marker({
-                position: {lat: station.lat, lng: station.lng},
-                map: map,
-                title: station.name,
-                icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
-              });
-              var info = new google.maps.InfoWindow({
-                content: '<b>' + station.name + '</b><br>' + station.address
-              });
-              marker.addListener('click', function() {
-                info.open(map, marker);
-              });
+            stations.forEach(function(s) {
+              new google.maps.Marker({position: {lat: s.lat, lng: s.lng}, map: map});
             });
           }
         </script>
         <script src="https://maps.googleapis.com/maps/api/js?key=$apiKey&callback=initMap" async defer></script>
-      </body>
-      </html>
+      </body></html>
     ''';
 
-    final blob = html.Blob([mapHtml], 'text/html');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-
-    ui.platformViewRegistry.registerViewFactory(
-      _viewId,
-      (int viewId) => html.IFrameElement()
-        ..src = url
-        ..style.border = 'none'
-        ..style.width = '100%'
-        ..style.height = '100%',
-    );
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadHtmlString(mapHtml);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: widget.height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: HtmlElementView(viewType: _viewId),
+        child: WebViewWidget(controller: _controller),
       ),
     );
   }
