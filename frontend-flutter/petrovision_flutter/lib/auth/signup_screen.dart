@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'otp_screen.dart';
 import 'success_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -88,7 +89,17 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_isFormValid) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const SuccessScreen()),
+        MaterialPageRoute(
+          builder: (_) => OtpScreen(
+            email: _emailController.text.trim(),
+            onVerified: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const SuccessScreen()),
+              );
+            },
+          ),
+        ),
       );
     }
   }

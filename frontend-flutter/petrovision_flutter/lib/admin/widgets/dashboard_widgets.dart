@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_models.dart';
+import '../screens/alert_detail_screen.dart';
 import 'interactive_widgets.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -78,6 +79,8 @@ class KpiCard extends StatelessWidget {
 
           Text(
             item.value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -90,28 +93,35 @@ class KpiCard extends StatelessWidget {
 
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: item.chipColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  item.change,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+              Flexible(
+                flex: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: item.chipColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    item.change,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   item.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF8A959E),
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -123,15 +133,16 @@ class KpiCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: HoverSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: selectedFilter,
                   dropdownColor: const Color(0xFFEAF3F7),
+                  isDense: true,
                   style: const TextStyle(
                     color: Color(0xFF132935),
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                   items: const [
                     DropdownMenuItem(value: 'Day', child: Text('Day')),
@@ -516,52 +527,7 @@ class StationAlertsCard extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         ...alerts.map(
-          (alert) => Container(
-            margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF132935).withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  alert.station,
-                  style: const TextStyle(color: Color(0xFF8A959E), fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: alert.chipColor,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    alert.severity,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          (alert) => _AlertTile(alert: alert),
         ),
       ],
     );
@@ -663,6 +629,105 @@ class _TableHeader extends StatelessWidget {
         color: Color(0xFF8A959E),
         fontWeight: FontWeight.w600,
         fontSize: 13,
+      ),
+    );
+  }
+}
+
+class _AlertTile extends StatefulWidget {
+  final AlertItem alert;
+  const _AlertTile({required this.alert});
+
+  @override
+  State<_AlertTile> createState() => _AlertTileState();
+}
+
+class _AlertTileState extends State<_AlertTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AlertDetailScreen(alert: widget.alert),
+            ),
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: _hovered ? const Color(0xFFF6F7F9) : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _hovered
+                    ? widget.alert.chipColor.withOpacity(0.3)
+                    : const Color(0xFFE5E7EB),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF132935).withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.alert.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.alert.station,
+                        style: const TextStyle(color: Color(0xFF8A959E), fontSize: 13),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: widget.alert.chipColor,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          widget.alert.severity,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 13,
+                  color: _hovered
+                      ? widget.alert.chipColor
+                      : const Color(0xFFD1D5DB),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

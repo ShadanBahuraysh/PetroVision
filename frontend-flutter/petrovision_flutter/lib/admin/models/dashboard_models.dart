@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// 🎨 COLOR SYSTEM
+/// COLOR SYSTEM
 class AppColors {
   static const navy = Color(0xFF132935);
   static const blue = Color(0xFF4195AF);
   static const lightBlue = Color(0xFF7FB3C8);
-
   static const green = Color(0xFF22C55E);
   static const red = Color(0xFFEF4444);
-
   static const grey = Color(0xFF8A959E);
 }
 
@@ -19,11 +17,9 @@ class KpiItem {
   final String change;
   final String subtitle;
   final IconData icon;
-
-  /// 🎨 NEW
-  final Color color;        // main accent (bars/icons)
-  final Color chipColor;    // change badge
-  final bool isPositive;    // for logic
+  final Color color;
+  final Color chipColor;
+  final bool isPositive;
 
   const KpiItem({
     required this.title,
@@ -37,18 +33,35 @@ class KpiItem {
   });
 }
 
+/// RECOMMENDATION MODEL
+class AlertRecommendation {
+  final String title;
+  final String description;
+  final String? estimatedTime;
+
+  const AlertRecommendation({
+    required this.title,
+    required this.description,
+    this.estimatedTime,
+  });
+}
+
 /// ALERT MODEL
 class AlertItem {
   final String title;
   final String station;
   final String severity;
   final Color chipColor;
+  final List<AlertRecommendation> recommendations;
+  final List<String> actionSteps;
 
   const AlertItem({
     required this.title,
     required this.station,
     required this.severity,
     required this.chipColor,
+    this.recommendations = const [],
+    this.actionSteps = const [],
   });
 }
 

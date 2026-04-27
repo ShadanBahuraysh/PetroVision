@@ -41,28 +41,15 @@ class AdminShell extends StatelessWidget {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Row(
-                      children: [
-                        _BrandIcon(),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'PetroVision',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Color(0xFF111827),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      height: 44,
+                      fit: BoxFit.contain,
                     ),
                   ),
 
@@ -107,9 +94,9 @@ class AdminShell extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(title, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800,color: Color(0xFF132935),)),
+                              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Color(0xFF132935))),
                               const SizedBox(height: 6),
-                              Text(subtitle, style: const TextStyle(fontSize: 14)),
+                              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, color: Color(0xFF8A959E))),
                             ],
                           ),
                         ),
@@ -130,9 +117,25 @@ class AdminShell extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
-                      child: child,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final contentWidth = constraints.maxWidth < 900
+                            ? 900.0
+                            : constraints.maxWidth;
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: contentWidth,
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: child,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

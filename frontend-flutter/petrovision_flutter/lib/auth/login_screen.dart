@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'otp_screen.dart';
 import 'success_screen.dart';
 import 'signup_screen.dart';
 import '../admin/screens/dashboard_screen.dart';
@@ -44,14 +45,25 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (email.toLowerCase() == 'admin@petro.com') {
-      Navigator.pushReplacementNamed(context, '/'); // Admin dashboard
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SuccessScreen()),
-      ); // Customer success → home
-    }
+    // Navigate to OTP screen — on verified, proceed to correct destination
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpScreen(
+          email: email,
+          onVerified: () {
+            if (email.toLowerCase() == 'admin@petro.com') {
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const SuccessScreen()),
+              );
+            }
+          },
+        ),
+      ),
+    );
   }
 
   @override
