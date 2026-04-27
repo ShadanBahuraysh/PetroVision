@@ -7,7 +7,6 @@ from app.api.offer_routes import router as offer_router
 
 app = FastAPI(title="PetroVision API")
 
-# لازم يكون هنا أول شيء
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(analysis_router)
+app.include_router(analysis_router, prefix="/analysis")
 app.include_router(station_router)
 app.include_router(loyalty_router)
 app.include_router(offer_router)

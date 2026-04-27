@@ -11,18 +11,30 @@ class PerformanceModel(Template):
         self.predictor = Predictor()
 
     def preprocess(self, stations: List[Dict[str, Any]]) -> pd.DataFrame:
-        df = pd.DataFrame(stations)
-        return df
+        return pd.DataFrame(stations)
 
     def process(self, prepared_data: pd.DataFrame):
-        predictions = self.predictor.predict(prepared_data)
-        return predictions
+        return self.predictor.predict(prepared_data)
 
     def postprocess(self, processed_result):
         rounded_predictions = [round(float(p), 2) for p in processed_result]
+
+        if len(rounded_predictions) == 0:
+            return Report(
+                report_id="performance_report",
+                model_name="PerformanceModel",
+                summary="No prediction results available",
+                metrics={
+                    "average_performance_score": 0.0
+                },
+                details={
+                    "predictions": []
+                }
+            )
+
         avg_score = round(float(sum(rounded_predictions) / len(rounded_predictions)), 2)
 
-        report = Report(
+        return Report(
             report_id="performance_report",
             model_name="PerformanceModel",
             summary="Predicted station performance",
@@ -33,5 +45,3 @@ class PerformanceModel(Template):
                 "predictions": rounded_predictions
             }
         )
-
-        return report
