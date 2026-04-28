@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui_web' as ui;
+import 'dart:html' as html;
 import 'stations_page.dart';
 import 'offers_page.dart'; 
 import 'manage_profile_screen.dart';
@@ -55,9 +57,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-
       drawer: _buildCustomDrawer(),
-
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -67,9 +67,7 @@ class _HomePageState extends State<HomePage> {
           const OffersPage(),
         ],
       ),
-
       bottomNavigationBar: _buildBottomNav(),
-
       floatingActionButton: FloatingActionButton(
         elevation: 4,
         backgroundColor: primaryNavy,
@@ -142,24 +140,18 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           _drawerItem(Icons.person_outline, "My Profile", () {
-             Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageProfileScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageProfileScreen()));
           }),
           _drawerItem(Icons.receipt_long_outlined, "Transaction History", () {
-             Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryPage()));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryPage()));
           }),
           const Divider(),
-_drawerItem(Icons.info_outline_rounded, "About Us", () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const AboutUsScreen()),
-  );
-}),       
-        _drawerItem(Icons.gavel_rounded, "Terms & Conditions", () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const TermsConditionsScreen()),
-  );
-}),
+          _drawerItem(Icons.info_outline_rounded, "About Us", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutUsScreen()));
+          }),
+          _drawerItem(Icons.gavel_rounded, "Terms & Conditions", () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const TermsConditionsScreen()));
+          }),
           _drawerItem(Icons.settings_outlined, "Settings", () {}),
           const Spacer(),
           ListTile(
@@ -182,10 +174,7 @@ _drawerItem(Icons.info_outline_rounded, "About Us", () {
   Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: primaryNavy.withOpacity(0.7), size: 22),
-      title: Text(
-        title, 
-        style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w600, fontSize: 14)
-      ),
+      title: Text(title, style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w600, fontSize: 14)),
       onTap: onTap,
     );
   }
@@ -205,7 +194,7 @@ class _HomeMainContentState extends State<HomeMainContent> {
   String _nextTier = "Silver";
   bool _isLoading = true;
 
-  final String userId = "U-0003"; // نفس الـ userId في LoyaltyDashboardScreen
+  final String userId = "U-0003";
 
   @override
   void initState() {
@@ -225,7 +214,6 @@ class _HomeMainContentState extends State<HomeMainContent> {
     });
   }
 
-  // دالة إظهار الباركود في منتصف الشاشة
   void _showBarcodePay(BuildContext context) {
     showDialog(
       context: context,
@@ -237,7 +225,7 @@ class _HomeMainContentState extends State<HomeMainContent> {
           child: Padding(
             padding: const EdgeInsets.all(25.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min, 
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -248,16 +236,9 @@ class _HomeMainContentState extends State<HomeMainContent> {
                   child: const Icon(Icons.local_offer_rounded, color: Color(0xFF4195AF), size: 30),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Redeem Offer",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1A2E35)),
-                ),
+                const Text("Redeem Offer", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1A2E35))),
                 const SizedBox(height: 8),
-                Text(
-                  "Scan this code at the station",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                ),
+                Text("Scan this code at the station", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
                 const SizedBox(height: 25),
                 Container(
                   padding: const EdgeInsets.all(15),
@@ -270,10 +251,7 @@ class _HomeMainContentState extends State<HomeMainContent> {
                     children: [
                       const Icon(Icons.qr_code_2_rounded, size: 180, color: Color(0xFF1A2E35)),
                       const SizedBox(height: 10),
-                      Text(
-                        "PV-9928-110",
-                        style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 12),
-                      ),
+                      Text("PV-9928-110", style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -341,97 +319,124 @@ class _HomeMainContentState extends State<HomeMainContent> {
   }
 
   Widget _buildPointsCard() {
-  const Color accentBlue = Color(0xFF4195AF);
-  return Column(
-    children: [
-      Text(
-        _isLoading ? "..." : "$_points",
-        style: const TextStyle(color: accentBlue, fontWeight: FontWeight.w900, fontSize: 22),
-      ),
-      const Text("POINTS", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
-    ],
-  );
-}
-
-Widget _buildMembershipCard() {
-  const Color accentBlue = Color(0xFF4195AF);
-  double progress = (_points / _nextTarget).clamp(0.0, 1.0);
-  return SizedBox(
-    width: 300,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    const Color accentBlue = Color(0xFF4195AF);
+    return Column(
       children: [
         Text(
-          "${_tier.toUpperCase()} STATUS",
-          style: const TextStyle(color: Colors.black54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1),
+          _isLoading ? "..." : "$_points",
+          style: const TextStyle(color: accentBlue, fontWeight: FontWeight.w900, fontSize: 22),
         ),
-        const SizedBox(height: 6),
-        Text(
-          "$_points / $_nextTarget",
-          style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900),
-        ),
-        Text(
-          "Points to $_nextTier Tier",
-          style: const TextStyle(color: Colors.black45, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.grey.shade200,
-            color: accentBlue,
-            minHeight: 8,
-          ),
-        ),
+        const Text("POINTS", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
       ],
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildMapCard(BuildContext context) {
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(28),
-    child: SizedBox(
-      height: 170,
-      width: double.infinity,
-      child: Stack(
+  Widget _buildMembershipCard() {
+    const Color accentBlue = Color(0xFF4195AF);
+    double progress = (_points / _nextTarget).clamp(0.0, 1.0);
+    return SizedBox(
+      width: 300,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // معاينة الخريطة
-const FullMapScreen(),
-          
-          // gradient overlay
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.black.withOpacity(0.3), Colors.transparent],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
-            ),
-          ),
-          
-          // زر Explore
-          Positioned(
-            bottom: 12,
-            right: 12,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FullMapScreen())),
-              icon: const Icon(Icons.map_rounded, size: 16),
-              label: const Text("Explore", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-            ),
+          Text("${_tier.toUpperCase()} STATUS", style: const TextStyle(color: Colors.black54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+          const SizedBox(height: 6),
+          Text("$_points / $_nextTarget", style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900)),
+          Text("Points to $_nextTier Tier", style: const TextStyle(color: Colors.black45, fontSize: 14)),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(value: progress, backgroundColor: Colors.grey.shade200, color: accentBlue, minHeight: 8),
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildMapCard(BuildContext context) {
+    final viewId = 'home-map-${DateTime.now().millisecondsSinceEpoch}';
+    const apiKey = 'AIzaSyDjdMGkREctRQN52HyAOaC6PS04H-j47Vs';
+    const backendUrl = 'http://localhost:8000/stations-db';
+
+    final mapHtml = '''
+      <!DOCTYPE html><html>
+      <head><style>body,html,#map{margin:0;padding:0;width:100%;height:100%;}</style></head>
+      <body>
+        <div id="map"></div>
+        <script>
+          async function initMap() {
+            var map = new google.maps.Map(document.getElementById("map"), {
+              center: {lat: 24.7136, lng: 46.6753}, zoom: 5,
+              mapTypeControl: false, streetViewControl: false, zoomControl: false,
+            });
+            try {
+              const res = await fetch('$backendUrl');
+              const stations = await res.json();
+              stations.forEach(function(s) {
+                new google.maps.Marker({
+                  position: {lat: s.lat, lng: s.lng},
+                  map: map,
+                  title: s.name,
+                  icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+                });
+              });
+            } catch(e) {
+              console.log('Error:', e);
+            }
+          }
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=$apiKey&callback=initMap" async defer></script>
+      </body></html>
+    ''';
+
+    final blob = html.Blob([mapHtml], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    ui.platformViewRegistry.registerViewFactory(
+      viewId,
+      (int id) => html.IFrameElement()
+        ..src = url
+        ..style.border = 'none'
+        ..style.width = '100%'
+        ..style.height = '100%',
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: SizedBox(
+        height: 170,
+        width: double.infinity,
+        child: Stack(
+          children: [
+            HtmlElementView(viewType: viewId),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black.withOpacity(0.3), Colors.transparent],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FullMapScreen())),
+                icon: const Icon(Icons.map_rounded, size: 16),
+                label: const Text("Explore", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildOfferItem(BuildContext context, Color accent) {
     return Container(

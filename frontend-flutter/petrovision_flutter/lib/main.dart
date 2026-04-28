@@ -22,8 +22,7 @@ class PetroVisionApp extends StatelessWidget {
       title: 'PetroVision',
       //initialRoute: '/dashboard_screen',
 
-      initialRoute: '/welcome',
-
+home: const HomePage(),
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.blue,
@@ -69,14 +68,14 @@ class PetroVisionApp extends StatelessWidget {
       ),
 
       routes: {
-        '/welcome': (context) => const WelcomeScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/': (context) => const DashboardScreen(),
-        '/loyalty': (context) => const LoyaltyProgramsScreen(),
-        '/members': (context) => const MembersScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/customer-home': (context) => const HomePage(),
-      },
+  '/welcome': (context) => const WelcomeScreen(),
+  '/login': (context) => const LoginScreen(),
+  '/loyalty': (context) => const LoyaltyProgramsScreen(),
+  '/members': (context) => const MembersScreen(),
+  '/settings': (context) => const SettingsScreen(),
+  '/customer-home': (context) => const HomePage(),
+  '/dashboard': (context) => const DashboardScreen(),
+},
     );
   }
 }
