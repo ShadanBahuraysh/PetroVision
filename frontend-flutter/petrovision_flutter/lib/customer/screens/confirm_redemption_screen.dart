@@ -1,9 +1,50 @@
 import 'package:flutter/material.dart';
-import 'redeem_points_screen.dart';
+import '../../services/loyalty_api_service.dart';
 
-class ConfirmRedemptionScreen extends StatelessWidget {
+class ConfirmRedemptionScreen extends StatefulWidget {
   final String rewardType;
-  const ConfirmRedemptionScreen({super.key, required this.rewardType});
+  final int pointsCost;
+  final int currentPoints;
+  final String userId;
+
+  const ConfirmRedemptionScreen({
+    super.key,
+    required this.rewardType,
+    required this.pointsCost,
+    required this.currentPoints,
+    required this.userId,
+  });
+
+  @override
+  State<ConfirmRedemptionScreen> createState() => _ConfirmRedemptionScreenState();
+}
+
+class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
+  bool _isLoading = false;
+
+  Future<void> _confirmRedeem(BuildContext context) async {
+    setState(() => _isLoading = true);
+
+    final result = await LoyaltyApiService.redeemPoints(
+      userId: widget.userId,
+      points: widget.pointsCost,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (!mounted) return;
+
+    if (result != null) {
+      _showBarcode(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❌ Something went wrong, try again"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   void _showBarcode(BuildContext context) {
     showDialog(
@@ -24,11 +65,15 @@ class ConfirmRedemptionScreen extends StatelessWidget {
                     color: const Color(0xFF4195AF).withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.local_offer_rounded, color: Color(0xFF4195AF), size: 30),
+                  child: const Icon(Icons.local_offer_rounded,
+                      color: Color(0xFF4195AF), size: 30),
                 ),
                 const SizedBox(height: 20),
                 const Text("Redeem Offer",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1A2E35))),
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1A2E35))),
                 const SizedBox(height: 8),
                 Text(
                   "Scan this code at the station",
@@ -43,11 +88,17 @@ class ConfirmRedemptionScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
-                  child: Column(
-                    children: const [
-                      Icon(Icons.qr_code_2_rounded, size: 180, color: Color(0xFF1A2E35)),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.qr_code_2_rounded,
+                          size: 180, color: Color(0xFF1A2E35)),
                       SizedBox(height: 10),
-                      Text("PV-9928-110", style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+                      Text("PV-9928-110",
+                          style: TextStyle(
+                              letterSpacing: 4,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: 12)),
                     ],
                   ),
                 ),
@@ -57,16 +108,20 @@ class ConfirmRedemptionScreen extends StatelessWidget {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-  Navigator.pop(context);
-  Navigator.pop(context);
-  Navigator.pop(context);
-},
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1A2E35),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: const Text("Close", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text("Close",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -79,38 +134,50 @@ class ConfirmRedemptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ النقاط المتبقية الحقيقية
+    final remainingPoints = widget.currentPoints - widget.pointsCost;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFB),
-     appBar: AppBar(
-  title: const Text(
-    "CONFIRM REDEMPTION",
-    style: TextStyle(
-      color: Color(0xFF1A2E35),
-      fontWeight: FontWeight.w900,
-      fontSize: 16,
-      letterSpacing: 2,
-    ),
-  ),
-  centerTitle: true,
-  backgroundColor: const Color(0xFFFBFBFB),
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
-    onPressed: () => Navigator.pop(context),
-  ),
-),
-      body: Center( // أضفنا Center ليكون الزر في المنتصف
+      appBar: AppBar(
+        title: const Text(
+          "CONFIRM REDEMPTION",
+          style: TextStyle(
+            color: Color(0xFF1A2E35),
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            letterSpacing: 2,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFFBFBFB),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded,
+              color: Color(0xFF1A2E35), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // توسيط المحتوى عمودياً
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("You are redeeming:", style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+              Text("You are redeeming:",
+                  style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              Text(rewardType, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A2E35))),
+              Text(widget.rewardType,
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF1A2E35))),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 15),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
@@ -118,26 +185,36 @@ class ConfirmRedemptionScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildPointRow("Points required", "200"),
+                    // ✅ النقاط الحقيقية
+                    _buildPointRow(
+                        "Points required", "${widget.pointsCost}"),
                     const Divider(height: 20),
-                    _buildPointRow("Remaining points", "595"),
+                    _buildPointRow(
+                        "Remaining points", "$remainingPoints"),
                   ],
                 ),
               ),
               const SizedBox(height: 40),
-              // تعديل عرض الزر هنا ليكون مثل حجم أزرار الـ Login
               SizedBox(
-                width: 220, // العرض المحدد ليناسب حجم زر Login العادي
+                width: 220,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: () => _showBarcode(context),
+                  // ✅ يتصل بالـ API أولاً
+                  onPressed:
+                      _isLoading ? null : () => _confirmRedeem(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A2E35),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
                   ),
-                  child: const Text("Show Barcode", 
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Show Barcode",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16)),
                 ),
               ),
             ],
@@ -151,8 +228,14 @@ class ConfirmRedemptionScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600)),
-        Text(value, style: const TextStyle(color: Color(0xFF1A2E35), fontWeight: FontWeight.w900, fontSize: 16)),
+        Text(label,
+            style: const TextStyle(
+                color: Colors.black54, fontWeight: FontWeight.w600)),
+        Text(value,
+            style: const TextStyle(
+                color: Color(0xFF1A2E35),
+                fontWeight: FontWeight.w900,
+                fontSize: 16)),
       ],
     );
   }
