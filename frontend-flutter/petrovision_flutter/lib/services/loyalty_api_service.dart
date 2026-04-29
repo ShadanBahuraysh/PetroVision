@@ -46,4 +46,48 @@ class LoyaltyApiService {
     }
     return [];
   }
+
+  static Future<Map<String, dynamic>?> earnPoints({
+    required String userId,
+    required double amount,
+    required String tier,
+    String? stationId,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/loyalty/earn-points"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": userId,
+          "amount": amount,
+          "tier": tier,
+          if (stationId != null) "station_id": stationId,
+        }),
+      );
+      if (res.statusCode == 200) return jsonDecode(res.body);
+    } catch (e) {
+      print("earnPoints error: $e");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> redeemPoints({
+    required String userId,
+    required int points,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/loyalty/redeem-points"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": userId,
+          "points": points,
+        }),
+      );
+      if (res.statusCode == 200) return jsonDecode(res.body);
+    } catch (e) {
+      print("redeemPoints error: $e");
+    }
+    return null;
+  }
 }
