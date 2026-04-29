@@ -1,7 +1,24 @@
 import 'package:flutter/material.dart';
+import '../../services/loyalty_api_service.dart';
 
-class EarnPointsScreen extends StatelessWidget {
+class EarnPointsScreen extends StatefulWidget {
   const EarnPointsScreen({super.key});
+
+  @override
+  State<EarnPointsScreen> createState() => _EarnPointsScreenState();
+}
+
+class _EarnPointsScreenState extends State<EarnPointsScreen> {
+  final String userId = "U-0003";
+  final String tier = "Bronze";
+  final TextEditingController _codeController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,23 +29,23 @@ class EarnPointsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
-  title: const Text(
-    "EARN POINTS",
-    style: TextStyle(
-      color: Color(0xFF1A2E35),
-      fontWeight: FontWeight.w900,
-      fontSize: 16,
-      letterSpacing: 2,
-    ),
-  ),
-  centerTitle: true,
-  backgroundColor: const Color(0xFFFBFBFB),
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
-    onPressed: () => Navigator.pop(context),
-  ),
-),
+        title: const Text(
+          "EARN POINTS",
+          style: TextStyle(
+            color: Color(0xFF1A2E35),
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            letterSpacing: 2,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFFBFBFB),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -45,7 +62,7 @@ class EarnPointsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // QR BOX
+            // QR BOX — ما تغير شي
             Container(
               height: 260,
               width: double.infinity,
@@ -92,6 +109,7 @@ class EarnPointsScreen extends StatelessWidget {
   }
 
   void _dialog(BuildContext context, Color navy, Color blue) {
+    _codeController.clear();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -105,6 +123,7 @@ class EarnPointsScreen extends StatelessWidget {
           ),
         ),
         content: TextField(
+          controller: _codeController,
           decoration: InputDecoration(
             hintText: "12-digit code",
             filled: true,
@@ -120,8 +139,42 @@ class EarnPointsScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
           ),
+          // ✅ هنا التغيير — Submit يتصل بالـ API
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: _isLoading
+                ? null
+                : () async {
+                    final code = _codeController.text.trim();
+                    if (code.isEmpty) return;
+
+                    Navigator.pop(context);
+                    setState(() => _isLoading = true);
+
+                    final result = await LoyaltyApiService.earnPoints(
+                      userId: userId,
+                      amount: 100,
+                      tier: tier,
+                    );
+
+                    setState(() => _isLoading = false);
+
+                    if (!mounted) return;
+                    if (result != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("✅ +${result['earned_points']} points added!"),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("❌ Something went wrong, try again"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: navy,
               shape: RoundedRectangleBorder(
@@ -132,7 +185,7 @@ class EarnPointsScreen extends StatelessWidget {
               "Submit",
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
-          )
+          ),
         ],
       ),
     );
