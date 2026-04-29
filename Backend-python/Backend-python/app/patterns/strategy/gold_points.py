@@ -1,4 +1,5 @@
-from patterns.strategy.point_strategy import PointStrategy
+from app.patterns.strategy.point_strategy import PointStrategy
+
 
 class GoldPoints(PointStrategy):
     def calculate_points(self, amount):

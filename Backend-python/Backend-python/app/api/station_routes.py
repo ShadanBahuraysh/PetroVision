@@ -1,38 +1,67 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+import os
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter()
 
-GOOGLE_API_KEY = "AIzaSyDjdMGkREctRQN52HyAOaC6PS04H-j47Vs"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
 
 @router.get("/stations")
-def get_stations():
-    url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
-    params = {
-        "query": "Petromin station Saudi Arabia",
-        "key": GOOGLE_API_KEY,
-    }
-
+def get_stations(query: str = "Petromin station Saudi Arabia"):
     try:
+        if not GOOGLE_API_KEY:
+            raise HTTPException(status_code=500, detail="GOOGLE_API_KEY is missing in .env")
+
+        url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+        params = {
+            "query": query,
+            "key": GOOGLE_API_KEY,
+        }
+
         response = requests.get(url, params=params, timeout=10)
         data = response.json()
 
-        print("Status:", data.get("status"))
-        print("Results count:", len(data.get("results", [])))
-
-        if data.get("status") != "OK":
-            return {"error": data.get("status"), "message": data.get("error_message", "")}
+        if data.get("status") not in ["OK", "ZERO_RESULTS"]:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "google_status": data.get("status"),
+                    "message": data.get("error_message", "")
+                }
+            )
 
         results = []
         for place in data.get("results", []):
+            location = place.get("geometry", {}).get("location", {})
+            lat = location.get("lat")
+            lng = location.get("lng")
+
             results.append({
-                "name": place["name"],
-                "lat": place["geometry"]["location"]["lat"],
-                "lng": place["geometry"]["location"]["lng"],
-                "address": place.get("formatted_address", "")
+                "station_id": place.get("place_id"),
+                "station_name": place.get("name", ""),
+                "name": place.get("name", ""),
+                "latitude": lat,
+                "longitude": lng,
+                "lat": lat,
+                "lng": lng,
+                "address": place.get("formatted_address", ""),
+                "status": "open" if place.get("business_status") == "OPERATIONAL" else place.get("business_status"),
+                "city": None,
+                "street": None,
+                "side_code": None,
+                "rating": place.get("rating"),
+                "place_id": place.get("place_id")
             })
 
         return results
 
+    except HTTPException:
+        raise
+    except requests.RequestException as e:
+        raise HTTPException(status_code=502, detail=f"Google Maps request failed: {str(e)}")
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))

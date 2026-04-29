@@ -2,6 +2,7 @@ from models.loyalty_account import LoyaltyAccount
 from models.membership import Membership
 from services.loyalty_service import LoyaltyService
 
+# Test file (we can remove it)
 # create objects
 account = LoyaltyAccount(account_id=1)
 membership = Membership(

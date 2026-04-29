@@ -1,5 +1,6 @@
 import os
 import sys
+# Test file (we can remove it)
 
 # 1. Setup paths to ensure local modules are visible
 current_dir = os.path.dirname(os.path.abspath(__file__))

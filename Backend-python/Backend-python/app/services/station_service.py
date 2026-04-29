@@ -1,27 +1,26 @@
-from station import Station
+from app.models.station import Station
+
 
 class StationService:
     def __init__(self):
         self.stations = [
-            Station(1, "PetroVision Station 1", "Jeddah", "Open", 4.5),
-            Station(2, "PetroVision Station 2", "Riyadh", "Closed", 4.1),
-            Station(3, "PetroVision Station 3", "Jeddah", "Open", 4.7),
+            Station("S001", station_name="PetroVision Station 1", city="Jeddah", status="Open", rating=4.5),
+            Station("S002", station_name="PetroVision Station 2", city="Riyadh", status="Closed", rating=4.1),
+            Station("S003", station_name="PetroVision Station 3", city="Jeddah", status="Open", rating=4.7),
         ]
 
     def load_stations(self):
         return self.stations
 
     def load_stations_by_location(self, location):
-        filtered_stations = []
-
-        for station in self.stations:
-            if station.location.lower() == location.lower():
-                filtered_stations.append(station)
-
-        return filtered_stations
+        return [
+            station for station in self.stations
+            if station.city and station.city.lower() == location.lower()
+        ]
 
     def get_station_by_id(self, station_id):
         for station in self.stations:
-            if station.station_id == station_id:
+            if str(station.station_id) == str(station_id):
                 return station
+
         return None
