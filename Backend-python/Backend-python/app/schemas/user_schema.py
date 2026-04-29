@@ -36,3 +36,13 @@ class VerifyOtpRequest(BaseModel):
 class AdminJobRequest(BaseModel):
     user_id: str
     job_number: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str

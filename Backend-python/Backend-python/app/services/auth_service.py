@@ -110,6 +110,67 @@ PetroVision Team
         )
 
         return bool(result.data)
+    
+    def send_password_reset_otp(self, email):
+        email = email.strip().lower()
+
+        result = (
+            supabase.table("users")
+            .select("*")
+            .eq("email", email)
+            .execute()
+        )
+
+        if not result.data:
+            return False
+
+        code = str(random.randint(100000, 999999))
+        expiry = time.time() + 300
+
+        self.otp_store[email] = {
+            "code": code,
+            "expiry": expiry,
+            "purpose": "reset_password"
+        }
+
+        try:
+            self.send_otp_email(email, code)
+            print("Password reset OTP sent successfully")
+        except Exception as e:
+            print("Email sending failed:", e)
+            print(f"Reset OTP for {email}: {code}")
+
+        return True
+
+    def reset_password(self, email, code, new_password):
+        email = email.strip().lower()
+
+        record = self.otp_store.get(email)
+
+        if not record:
+            return False
+
+        if record.get("purpose") != "reset_password":
+            return False
+
+        if time.time() > record["expiry"]:
+            self.otp_store.pop(email, None)
+            return False
+
+        if record["code"] != code:
+            return False
+
+        result = (
+            supabase.table("users")
+            .update({"password": new_password})
+            .eq("email", email)
+            .execute()
+        )
+
+        self.otp_store.pop(email, None)
+
+        return bool(result.data)
+
 
     def signup(
         self,

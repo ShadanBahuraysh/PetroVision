@@ -7,7 +7,9 @@ from app.schemas.user_schema import (
     UserLogin,
     UserCreate,
     VerifyOtpRequest,
-    AdminJobRequest
+    AdminJobRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest
 )
 
 
@@ -104,6 +106,48 @@ def signup(data: UserCreate):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest):
+    try:
+        result = auth_service.send_password_reset_otp(data.email)
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Email not found")
+
+        return {
+            "message": "Password reset OTP sent to email",
+            "requires_otp": True
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest):
+    try:
+        result = auth_service.reset_password(
+            email=data.email,
+            code=data.code,
+            new_password=data.new_password
+        )
+
+        if not result:
+            raise HTTPException(status_code=400, detail="Invalid OTP or email")
+
+        return {
+            "message": "Password reset successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.get("/user/{user_id}")
