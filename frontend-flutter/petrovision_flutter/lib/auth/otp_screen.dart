@@ -110,6 +110,7 @@ class _OtpScreenState extends State<OtpScreen> {
       for (final c in _controllers) c.clear();
       _focusNodes[0].requestFocus();
     }
+    
   }
 
   Future<void> _resend() async {

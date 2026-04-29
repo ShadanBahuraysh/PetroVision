@@ -30,21 +30,6 @@ class _OffersPageState extends State<OffersPage> {
     });
   }
 
-  List<Color> _getGradient(String offerType) {
-    switch (offerType) {
-      case "Fuel Cashback":
-        return [const Color(0xFF1A2E35), const Color(0xFF2D4F5E)];
-      case "Coffee Combo":
-        return [const Color(0xFF4195AF), const Color(0xFF5BB8D4)];
-      case "Free Car Wash":
-        return [const Color(0xFF1A2E35), const Color(0xFF4195AF)];
-      case "Weekend Bonus":
-        return [const Color(0xFF4195AF), const Color(0xFF1A2E35)];
-      default:
-        return [const Color(0xFF1A2E35), const Color(0xFF4195AF)];
-    }
-  }
-
   IconData _getIcon(String offerType) {
     switch (offerType) {
       case "Fuel Cashback": return Icons.local_gas_station_rounded;
@@ -60,86 +45,108 @@ class _OffersPageState extends State<OffersPage> {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
-          automaticallyImplyLeading: false, // ← أضف هذا
+        automaticallyImplyLeading: false,
         title: const Text(
-          "Special Offers",
-          style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w800, fontSize: 16),
+          "OFFERS",
+          style: TextStyle(
+            color: primaryNavy,
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            letterSpacing: 2,
+          ),
         ),
+        centerTitle: true,
         backgroundColor: scaffoldBg,
         elevation: 0,
-        centerTitle: true,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: accentBlue))
           : offers.isEmpty
               ? const Center(child: Text("No offers available"))
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                   itemCount: offers.length,
                   itemBuilder: (context, index) {
                     final offer = offers[index];
                     final offerType = offer["offer_type"] ?? "";
-                    final gradient = _getGradient(offerType);
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      height: 150,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: gradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: Colors.grey.shade200, width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: gradient[0].withOpacity(0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
                         child: Row(
                           children: [
+                            // أيقونة
                             Container(
-                              padding: const EdgeInsets.all(14),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
+                                color: accentBlue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: Icon(_getIcon(offerType), color: Colors.white, size: 26),
+                              child: Icon(_getIcon(offerType), color: accentBlue, size: 24),
                             ),
+
                             const SizedBox(width: 16),
+
+                            // النص
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  // Tag
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: accentBlue.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       offer["offer_id"] ?? "",
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 10),
+                                      style: const TextStyle(
+                                        color: accentBlue,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 10,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+
+                                  const SizedBox(height: 6),
+
                                   Text(
                                     offerType,
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Colors.white),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                      color: primaryNavy,
+                                    ),
                                   ),
+
                                   const SizedBox(height: 4),
+
                                   Text(
                                     "Earn ${offer["earn_points"]} pts • Redeem ${offer["redeem_points"]} pts",
-                                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12),
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
+
+                            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey.shade300),
                           ],
                         ),
                       ),

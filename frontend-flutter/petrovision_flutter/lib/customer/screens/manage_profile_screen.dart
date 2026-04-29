@@ -15,9 +15,9 @@ class ManageProfileScreen extends StatelessWidget {
           "My Profile",
           style: TextStyle(
             color: Color(0xFF1A2E35),
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
             fontSize: 16,
-            letterSpacing: 0.5,
+            letterSpacing: 2,
           ),
         ),
         backgroundColor: const Color(0xFFFBFBFB),

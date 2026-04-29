@@ -21,7 +21,7 @@ class PetroVisionApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'PetroVision',
       //initialRoute: '/dashboard_screen',
-
+  //initialRoute: '/welcome_screen',
 home: const HomePage(),
       theme: ThemeData(
         useMaterial3: true,

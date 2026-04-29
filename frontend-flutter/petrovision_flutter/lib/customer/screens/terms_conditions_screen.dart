@@ -11,19 +11,23 @@ class TermsConditionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFB),
       appBar: AppBar(
-        title: const Text(
-          "TERMS & CONDITIONS",
-          style: TextStyle(
-            fontWeight: FontWeight.w900, 
-            fontSize: 14, 
-            letterSpacing: 1.5
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        foregroundColor: primaryNavy,
-        elevation: 0,
-      ),
+  title: const Text(
+    "TERMS & CONDITIONS",
+    style: TextStyle(
+      color: Color(0xFF1A2E35),
+      fontWeight: FontWeight.w900,
+      fontSize: 16,
+      letterSpacing: 2,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: const Color(0xFFFBFBFB),
+  elevation: 0,
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+    onPressed: () => Navigator.pop(context),
+  ),
+),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(25),
         child: Column(
@@ -33,7 +37,7 @@ class TermsConditionsScreen extends StatelessWidget {
             Text(
               "Welcome to PetroVision",
               style: TextStyle(
-                color: primaryNavy, 
+                color: accentBlue, 
                 fontWeight: FontWeight.bold, 
                 fontSize: 25, // Size 20
               ),

@@ -50,12 +50,7 @@ class _HomePageState extends State<HomePage> {
             letterSpacing: 2,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_none_rounded, color: primaryNavy),
-            onPressed: () {},
-          ),
-        ],
+        // ← حذف أيقونة الجرس
       ),
       drawer: _buildCustomDrawer(),
       body: IndexedStack(
@@ -81,9 +76,13 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)],
-      ),
+  color: const Color(0xFFF0F0F0),
+  boxShadow: [BoxShadow(color: Colors.grey.shade400, blurRadius: 8, offset: const Offset(0, -1))],
+),
       child: BottomAppBar(
+        color: const Color.fromARGB(155, 245, 245, 245),
+surfaceTintColor: const Color.fromARGB(155, 245, 245, 245),
+        shadowColor: Colors.transparent,
         shape: const CircularNotchedRectangle(),
         notchMargin: 8,
         child: SizedBox(
@@ -110,12 +109,12 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: isSelected ? accentBlue : Colors.grey.shade400, size: 26),
+          Icon(icon, color: isSelected ? accentBlue : const Color(0xFFB0B8C1), size: 26),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? accentBlue : Colors.grey.shade400,
+              color: isSelected ? accentBlue : const Color(0xFFB0B8C1),
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
@@ -152,7 +151,7 @@ class _HomePageState extends State<HomePage> {
           _drawerItem(Icons.gavel_rounded, "Terms & Conditions", () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const TermsConditionsScreen()));
           }),
-          _drawerItem(Icons.settings_outlined, "Settings", () {}),
+          // ← حذف زر Settings
           const Spacer(),
           ListTile(
             leading: const Icon(Icons.logout_rounded, color: Colors.redAccent), 
@@ -444,7 +443,7 @@ class _HomeMainContentState extends State<HomeMainContent> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade300, width: 1.2), 
+        border: Border.all(color: Colors.grey.shade200, width: 1.2), 
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(

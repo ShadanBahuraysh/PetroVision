@@ -10,14 +10,24 @@ class AboutUsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFB),
-      appBar: AppBar(
-        title: const Text("ABOUT US", 
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5)),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        foregroundColor: primaryNavy,
-        elevation: 0,
-      ),
+    appBar: AppBar(
+  title: const Text(
+    "ABOUT US",
+    style: TextStyle(
+      color: Color(0xFF1A2E35),
+      fontWeight: FontWeight.w900,
+      fontSize: 16,
+      letterSpacing: 2,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: const Color(0xFFFBFBFB),
+  elevation: 0,
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+    onPressed: () => Navigator.pop(context),
+  ),
+),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

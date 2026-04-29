@@ -29,17 +29,25 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
         : rewards.where((e) => e["cat"] == selectedCategory).toList();
 
     return Scaffold(
-      backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        title: const Text(
-          "REDEEM",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-        ),
-        backgroundColor: scaffoldBg,
-        foregroundColor: primaryNavy,
-        elevation: 0,
-        centerTitle: true,
-      ),
+     appBar: AppBar(
+  title: const Text(
+    "REDEEM",
+    style: TextStyle(
+      color: Color(0xFF1A2E35),
+      fontWeight: FontWeight.w900,
+      fontSize: 16,
+      letterSpacing: 2,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: const Color(0xFFFBFBFB),
+  elevation: 0,
+  leading: IconButton(
+  icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+  onPressed: () => Navigator.pop(context),
+),
+),
+    
       body: Column(
         children: [
           _pointsCard(),

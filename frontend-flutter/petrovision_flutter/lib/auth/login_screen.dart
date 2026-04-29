@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'otp_screen.dart';
 import 'success_screen.dart';
 import 'signup_screen.dart';
-import '../admin/screens/dashboard_screen.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,6 +21,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  bool _isLoading = false;
+  String? _errorMessage;
+
   @override
   void dispose() {
     emailController.dispose();
@@ -27,43 +31,62 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void handleLogin() {
+  Future<void> handleLogin() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
-      );
+      setState(() => _errorMessage = "Please enter email and password");
       return;
     }
 
     if (!email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid email format")),
-      );
+      setState(() => _errorMessage = "Invalid email format");
       return;
     }
 
-    // Navigate to OTP screen — on verified, proceed to correct destination
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OtpScreen(
-          email: email,
-          onVerified: () {
-            if (email.toLowerCase() == 'admin@petro.com') {
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-            } else {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const SuccessScreen()),
-              );
-            }
-          },
-        ),
-      ),
-    );
+    setState(() { _isLoading = true; _errorMessage = null; });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:8000/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email, 'password': password}),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final role = data['user']?['role'] ?? 'customer';
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpScreen(
+              email: email,
+              onVerified: () {
+                if (role == 'admin') {
+                  Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SuccessScreen()),
+                  );
+                }
+              },
+            ),
+          ),
+        );
+      } else {
+        final data = json.decode(response.body);
+        setState(() => _errorMessage = data['detail'] ?? 'Invalid email or password');
+      }
+    } catch (e) {
+      setState(() => _errorMessage = 'Connection error. Try again.');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -80,12 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         title: Text(
           "LOGIN",
-          style: TextStyle(
-            color: primaryNavy,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-            letterSpacing: 2,
-          ),
+          style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 2),
         ),
       ),
       body: SafeArea(
@@ -94,7 +112,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               const SizedBox(height: 30),
-
               Container(
                 height: 70, width: 70,
                 decoration: BoxDecoration(
@@ -104,18 +121,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Icon(Icons.local_gas_station_rounded, color: accentBlue, size: 35),
               ),
-
               const SizedBox(height: 40),
-              Text(
-                "Welcome back",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: primaryNavy, letterSpacing: -0.5),
-              ),
+              Text("Welcome back", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: primaryNavy, letterSpacing: -0.5)),
               const SizedBox(height: 8),
-              Text(
-                "Sign in to your account",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-
+              Text("Sign in to your account", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
               const SizedBox(height: 45),
 
               _buildLabel("Email Address"),
@@ -140,33 +149,45 @@ class _LoginScreenState extends State<LoginScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-  onPressed: () => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-  ),
-  child: Text(
-    "Forgot password?",
-    style: TextStyle(color: accentBlue, fontSize: 13, fontWeight: FontWeight.w700),
-  ),
-),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                  child: Text("Forgot password?", style: TextStyle(color: accentBlue, fontSize: 13, fontWeight: FontWeight.w700)),
+                ),
               ),
+
+              // Error message
+              if (_errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline_rounded, color: Colors.red.shade400, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(_errorMessage!, style: TextStyle(color: Colors.red.shade600, fontSize: 13))),
+                    ],
+                  ),
+                ),
 
               const SizedBox(height: 35),
 
               SizedBox(
-                width: 240,
-                height: 40,
+                width: 240, height: 50,
                 child: ElevatedButton(
-                  onPressed: handleLogin,
+                  onPressed: _isLoading ? null : handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryNavy,
+                    disabledBackgroundColor: Colors.grey.shade300,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    "Login",
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                      : const Text("Login", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
 
@@ -178,10 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text("Don't have an account? ", style: TextStyle(color: Colors.grey.shade600)),
                   GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen())),
-                    child: Text(
-                      "Sign Up",
-                      style: TextStyle(color: accentBlue, fontWeight: FontWeight.w800),
-                    ),
+                    child: Text("Sign Up", style: TextStyle(color: accentBlue, fontWeight: FontWeight.w800)),
                   ),
                 ],
               ),
@@ -196,10 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLabel(String text) {
     return Align(
       alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: primaryNavy, letterSpacing: 0.5),
-      ),
+      child: Text(text, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: primaryNavy, letterSpacing: 0.5)),
     );
   }
 

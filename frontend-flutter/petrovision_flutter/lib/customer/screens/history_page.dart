@@ -45,16 +45,24 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFB),
-      appBar: AppBar(
-        title: const Text(
-          "TRANSACTION HISTORY",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.5),
-        ),
-        backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFF1A2E35),
-        elevation: 0,
-        centerTitle: true,
-      ),
+     appBar: AppBar(
+  title: const Text(
+    "TRANSACTION HISTORY",
+    style: TextStyle(
+      color: Color(0xFF1A2E35),
+      fontWeight: FontWeight.w900,
+      fontSize: 16,
+      letterSpacing: 2,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: const Color(0xFFFBFBFB),
+  elevation: 0,
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+    onPressed: () => Navigator.pop(context),
+  ),
+),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : transactions.isEmpty

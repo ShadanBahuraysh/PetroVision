@@ -12,19 +12,23 @@ class EarnPointsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
-        title: const Text(
-          "EARN POINTS",
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 15,
-            letterSpacing: 1.5,
-          ),
-        ),
-        backgroundColor: scaffoldBg,
-        foregroundColor: primaryNavy,
-        elevation: 0,
-        centerTitle: true,
-      ),
+  title: const Text(
+    "EARN POINTS",
+    style: TextStyle(
+      color: Color(0xFF1A2E35),
+      fontWeight: FontWeight.w900,
+      fontSize: 16,
+      letterSpacing: 2,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: const Color(0xFFFBFBFB),
+  elevation: 0,
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+    onPressed: () => Navigator.pop(context),
+  ),
+),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(

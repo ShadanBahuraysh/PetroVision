@@ -57,11 +57,10 @@ class ConfirmRedemptionScreen extends StatelessWidget {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const RedeemPointsScreen()),
-                      );
-                    },
+  Navigator.pop(context);
+  Navigator.pop(context);
+  Navigator.pop(context);
+},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1A2E35),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -82,14 +81,24 @@ class ConfirmRedemptionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFB),
-      appBar: AppBar(
-        title: const Text("CONFIRM REDEMPTION", 
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)),
-        backgroundColor: const Color(0xFFFBFBFB),
-        foregroundColor: const Color(0xFF1A2E35),
-        elevation: 0,
-        centerTitle: true,
-      ),
+     appBar: AppBar(
+  title: const Text(
+    "CONFIRM REDEMPTION",
+    style: TextStyle(
+      color: Color(0xFF1A2E35),
+      fontWeight: FontWeight.w900,
+      fontSize: 16,
+      letterSpacing: 2,
+    ),
+  ),
+  centerTitle: true,
+  backgroundColor: const Color(0xFFFBFBFB),
+  elevation: 0,
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+    onPressed: () => Navigator.pop(context),
+  ),
+),
       body: Center( // أضفنا Center ليكون الزر في المنتصف
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -123,7 +132,7 @@ class ConfirmRedemptionScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => _showBarcode(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4195AF),
+                    backgroundColor: const Color(0xFF1A2E35),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
                   ),
