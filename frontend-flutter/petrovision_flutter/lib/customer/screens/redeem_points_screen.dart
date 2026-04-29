@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'confirm_redemption_screen.dart';
+import '../../services/loyalty_api_service.dart';
 
 class RedeemPointsScreen extends StatefulWidget {
   const RedeemPointsScreen({super.key});
@@ -10,17 +11,35 @@ class RedeemPointsScreen extends StatefulWidget {
 
 class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
   String selectedCategory = "All";
+  int currentPoints = 0;
+  bool isLoading = true;
+  final String userId = "U-0003";
 
   final Color primaryNavy = const Color(0xFF1A2E35);
   final Color accentBlue = const Color(0xFF4195AF);
   final Color scaffoldBg = const Color(0xFFFBFBFB);
 
   final List<Map<String, dynamic>> rewards = [
-    {"title": "Fuel Voucher", "pts": "2000 PTS", "cat": "Fuel", "icon": Icons.local_gas_station},
-    {"title": "Oil Filter", "pts": "450 PTS", "cat": "Services", "icon": Icons.build},
-    {"title": "Car Wash", "pts": "600 PTS", "cat": "Services", "icon": Icons.local_car_wash},
-    {"title": "Coffee", "pts": "350 PTS", "cat": "Coffee", "icon": Icons.coffee},
+    {"title": "Fuel Voucher", "pts": 2000, "cat": "Fuel", "icon": Icons.local_gas_station},
+    {"title": "Oil Filter", "pts": 450, "cat": "Services", "icon": Icons.build},
+    {"title": "Car Wash", "pts": 600, "cat": "Services", "icon": Icons.local_car_wash},
+    {"title": "Coffee", "pts": 350, "cat": "Coffee", "icon": Icons.coffee},
   ];
+
+  // ✅ جديد — تجيب النقاط من الـ API
+  @override
+  void initState() {
+    super.initState();
+    _loadPoints();
+  }
+
+  Future<void> _loadPoints() async {
+    final pts = await LoyaltyApiService.getPoints(userId);
+    setState(() {
+      currentPoints = pts;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,25 +48,24 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
         : rewards.where((e) => e["cat"] == selectedCategory).toList();
 
     return Scaffold(
-     appBar: AppBar(
-  title: const Text(
-    "REDEEM",
-    style: TextStyle(
-      color: Color(0xFF1A2E35),
-      fontWeight: FontWeight.w900,
-      fontSize: 16,
-      letterSpacing: 2,
-    ),
-  ),
-  centerTitle: true,
-  backgroundColor: const Color(0xFFFBFBFB),
-  elevation: 0,
-  leading: IconButton(
-  icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
-  onPressed: () => Navigator.pop(context),
-),
-),
-    
+      appBar: AppBar(
+        title: const Text(
+          "REDEEM",
+          style: TextStyle(
+            color: Color(0xFF1A2E35),
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            letterSpacing: 2,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFFBFBFB),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Column(
         children: [
           _pointsCard(),
@@ -70,10 +88,20 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text("Your Points", style: TextStyle(color: Colors.black54, fontSize: 12)),
-          SizedBox(height: 4),
-          Text("795 POINTS", style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900)),
+        children: [
+          const Text("Your Points", style: TextStyle(color: Colors.black54, fontSize: 12)),
+          const SizedBox(height: 4),
+          // ✅ جديد — النقاط الحقيقية
+          isLoading
+              ? const CircularProgressIndicator()
+              : Text(
+                  "$currentPoints POINTS",
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
         ],
       ),
     );
@@ -138,23 +166,29 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item['title'], style: const TextStyle(fontWeight: FontWeight.w800)),
-                Text(item['pts'], style: const TextStyle(color: Colors.grey)),
+                Text("${item['pts']} PTS", style: const TextStyle(color: Colors.grey)),
               ],
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ConfirmRedemptionScreen(
-                    rewardType: item['title'],
-                  ),
-                ),
-              );
-            },
+            onPressed: currentPoints < item['pts']
+                ? null  // ✅ الزر يتعطل لو ما في نقاط كافية
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ConfirmRedemptionScreen(
+                          rewardType: item['title'],
+                          pointsCost: item['pts'],        // ✅ جديد
+                          currentPoints: currentPoints,   // ✅ جديد
+                          userId: userId,                 // ✅ جديد
+                        ),
+                      ),
+                    );
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryNavy,
+              disabledBackgroundColor: Colors.grey.shade300,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text("Redeem", style: TextStyle(color: Colors.white)),
