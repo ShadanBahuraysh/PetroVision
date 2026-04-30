@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/loyalty_api_service.dart';
 
 class EarnPointsScreen extends StatefulWidget {
@@ -42,7 +43,8 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
         backgroundColor: const Color(0xFFFBFBFB),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_rounded,
+              color: Color(0xFF1A2E35), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -62,7 +64,7 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
             ),
             const SizedBox(height: 40),
 
-            // QR BOX — ما تغير شي
+            // QR BOX
             Container(
               height: 260,
               width: double.infinity,
@@ -124,6 +126,11 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
         ),
         content: TextField(
           controller: _codeController,
+          keyboardType: TextInputType.number,
+          maxLength: 12,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
           decoration: InputDecoration(
             hintText: "12-digit code",
             filled: true,
@@ -139,13 +146,12 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
           ),
-          // ✅ هنا التغيير — Submit يتصل بالـ API
           ElevatedButton(
             onPressed: _isLoading
                 ? null
                 : () async {
                     final code = _codeController.text.trim();
-                    if (code.isEmpty) return;
+                    if (code.length < 12) return;
 
                     Navigator.pop(context);
                     setState(() => _isLoading = true);
@@ -162,7 +168,8 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
                     if (result != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("✅ +${result['earned_points']} points added!"),
+                          content: Text(
+                              "✅ +${result['earned_points']} points added!"),
                           backgroundColor: Colors.green,
                         ),
                       );
@@ -183,7 +190,8 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
             ),
             child: const Text(
               "Submit",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],
