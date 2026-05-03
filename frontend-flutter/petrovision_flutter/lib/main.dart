@@ -22,7 +22,7 @@ class PetroVisionApp extends StatelessWidget {
       title: 'PetroVision',
       //initialRoute: '/dashboard_screen',
   //initialRoute: '/welcome_screen',
-home: const HomePage(),
+home: const DashboardScreen(),
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.blue,

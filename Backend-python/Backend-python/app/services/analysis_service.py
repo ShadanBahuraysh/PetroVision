@@ -79,6 +79,16 @@ class AnalysisService:
             return "Medium"
         return "Low"
 
+    def _get_performance_status(self, score_metrics: dict) -> str:
+        final_score = score_metrics.get("final_station_score", 0)
+
+        if final_score >= 70:
+            return "Good"
+        if final_score >= 55:
+            return "Fair"
+        return "Poor"
+
+
     def _build_station_summary_text(self, station_id: str, score_metrics: dict, worst_time: str, best_time: str, issues: list) -> str:
         final_score = score_metrics.get("final_station_score", 0)
         mean_score = score_metrics.get("predicted_mean", 0)
@@ -218,6 +228,7 @@ class AnalysisService:
             "critical_score_count": score_metrics["critical_score_count"],
             "final_station_score": score_metrics["final_station_score"],
             "priority": self._get_priority_from_metrics(score_metrics),
+            "performance_status": self._get_performance_status(score_metrics),
             "best_time": best_time,
             "worst_time": worst_time,
             "main_issues": issue_summary,
@@ -234,6 +245,7 @@ class AnalysisService:
         return result
 
     def analyze_all_stations_ranking(self):
+
         df = self.data_service.get_all_data()
 
         if df.empty:
@@ -242,38 +254,45 @@ class AnalysisService:
         ranking = []
 
         for station_id in sorted(df["station_id"].dropna().unique()):
-            station_df = df[df["station_id"] == station_id]
+            try:
+                station_df = df[df["station_id"] == station_id]
 
-            if station_df.empty:
+                if station_df.empty:
+                    continue
+
+                stations = station_df.to_dict(orient="records")
+                performance_report = self.performance_model.run(stations).to_dict()
+                recommendation_report = self.recommendation_model.run(stations).to_dict()
+
+                predictions = performance_report.get("details", {}).get("predictions", [])
+                avg_score = performance_report.get("metrics", {}).get("average_performance_score", 0)
+                recommendation_results = recommendation_report.get("details", {}).get("results", [])
+
+                issues = self._extract_station_issue_summary(recommendation_results)
+                score_metrics = self._compute_station_score_metrics(station_df, predictions)
+
+                ranking.append({
+                    "station_id": station_id,
+                    "average_performance_score": avg_score,
+                    "predicted_mean": score_metrics["predicted_mean"],
+                    "recent_predicted_mean": score_metrics["recent_predicted_mean"],
+                    "predicted_min": score_metrics["predicted_min"],
+                    "predicted_max": score_metrics["predicted_max"],
+                    "predicted_std": score_metrics["predicted_std"],
+                    "p10_score": score_metrics["p10_score"],
+                    "low_score_count": score_metrics["low_score_count"],
+                    "high_score_count": score_metrics["high_score_count"],
+                    "critical_score_count": score_metrics["critical_score_count"],
+                    "final_station_score": score_metrics["final_station_score"],
+                    "priority": self._get_priority_from_metrics(score_metrics),
+                    "performance_status": self._get_performance_status(score_metrics),
+                    "top_issue": issues[0]["issue"] if issues else None,
+                    "n_rows": len(station_df)
+                })
+
+            except Exception as e:
+                print(f"Skipping station {station_id} due to error: {e}")
                 continue
-
-            stations = station_df.to_dict(orient="records")
-            performance_report = self.performance_model.run(stations).to_dict()
-            recommendation_report = self.recommendation_model.run(stations).to_dict()
-
-            predictions = performance_report.get("details", {}).get("predictions", [])
-            avg_score = performance_report.get("metrics", {}).get("average_performance_score", 0)
-            recommendation_results = recommendation_report.get("details", {}).get("results", [])
-            issues = self._extract_station_issue_summary(recommendation_results)
-            score_metrics = self._compute_station_score_metrics(station_df, predictions)
-
-            ranking.append({
-                "station_id": station_id,
-                "average_performance_score": avg_score,
-                "predicted_mean": score_metrics["predicted_mean"],
-                "recent_predicted_mean": score_metrics["recent_predicted_mean"],
-                "predicted_min": score_metrics["predicted_min"],
-                "predicted_max": score_metrics["predicted_max"],
-                "predicted_std": score_metrics["predicted_std"],
-                "p10_score": score_metrics["p10_score"],
-                "low_score_count": score_metrics["low_score_count"],
-                "high_score_count": score_metrics["high_score_count"],
-                "critical_score_count": score_metrics["critical_score_count"],
-                "final_station_score": score_metrics["final_station_score"],
-                "priority": self._get_priority_from_metrics(score_metrics),
-                "top_issue": issues[0]["issue"] if issues else None,
-                "n_rows": len(station_df)
-            })
 
         ranking.sort(key=lambda x: x["final_station_score"])
 
@@ -281,6 +300,7 @@ class AnalysisService:
             item["rank"] = idx
 
         return ranking
+
 
     def get_ranking(self):
         if self.cached_ranking is not None:

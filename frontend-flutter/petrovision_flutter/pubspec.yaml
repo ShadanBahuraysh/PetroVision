@@ -11,9 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
   google_fonts: ^6.2.1
-  webview_flutter: ^4.9.0
   cupertino_icons: ^1.0.8
   mobile_scanner: ^7.2.0
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

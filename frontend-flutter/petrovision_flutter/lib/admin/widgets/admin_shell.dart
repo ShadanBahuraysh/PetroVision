@@ -8,6 +8,7 @@ class AdminShell extends StatelessWidget {
   final String subtitle;
   final Widget child;
   final bool showExportButton;
+  final VoidCallback? onExport;
 
   const AdminShell({
     super.key,
@@ -16,6 +17,7 @@ class AdminShell extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.showExportButton = true,
+    this.onExport,
   });
 
   static const List<_NavItem> _items = [
@@ -104,7 +106,7 @@ class AdminShell extends StatelessWidget {
                           MouseRegion(
                             cursor: SystemMouseCursors.click,
                             child: FilledButton.icon(
-  onPressed: () {},
+  onPressed: onExport,
   style: darkDesktopButtonStyle().copyWith(
     backgroundColor: const WidgetStatePropertyAll(Color(0xFF132935)),
     foregroundColor: const WidgetStatePropertyAll(Colors.white),

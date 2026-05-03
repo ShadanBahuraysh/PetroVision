@@ -256,3 +256,51 @@ def get_loyalty_programs():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin-summary")
+def get_loyalty_admin_summary(year: int = datetime.utcnow().year, month: int | None = None):
+    try:
+        customers = supabase.table("customer").select("*").execute().data or []
+        memberships = supabase.table("membership").select("*").execute().data or []
+        transactions = supabase.table("transactions").select("*").execute().data or []
+
+        monthly_counts = {m: 0 for m in range(1, 13)}
+
+        for transaction in transactions:
+            date_value = transaction.get("date")
+            if not date_value:
+                continue
+
+            try:
+                date_text = str(date_value).replace("Z", "")
+                dt = datetime.fromisoformat(date_text)
+            except Exception:
+                continue
+
+            if dt.year == year and (month is None or dt.month == month):
+                monthly_counts[dt.month] += 1
+
+        member_growth = [
+            {"month": m, "count": monthly_counts[m]} for m in range(1, 13)
+        ]
+
+        tier_counts = {"Gold": 0, "Silver": 0, "Bronze": 0}
+
+        for membership in memberships:
+            tier = str(membership.get("tier", "Bronze")).strip().capitalize()
+            if tier in tier_counts:
+                tier_counts[tier] += 1
+            else:
+                tier_counts["Bronze"] += 1
+
+        return {
+            "year": year,
+            "month": month,
+            "total_customers": len(customers),
+            "member_growth": member_growth,
+            "tier_distribution": tier_counts,
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

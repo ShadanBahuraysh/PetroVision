@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.services.auth_service import AuthService
 from app.patterns.proxy.gateway import AppAccessProxy
 from app.patterns.proxy.real_gateway import RealApplicationGateway
+from app.supabase_client import supabase
 from app.schemas.user_schema import (
     UserLogin,
     UserCreate,
@@ -150,18 +151,51 @@ def reset_password(data: ResetPasswordRequest):
 
 
 
-@router.get("/user/{user_id}")
-def get_user(user_id: str):
+@router.get("/users")
+def get_all_users():
     try:
-        user = auth_service.get_user(user_id)
+        # Get all customer user_ids from the customer table
+        customer_result = supabase.table("customer").select("user_id").execute()
+        customer_ids = {c["user_id"] for c in (customer_result.data or [])}
 
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        if not customer_ids:
+            return []
 
-        return user
+        # Get user details
+        users_result = supabase.table("users").select("user_id,fname,lname,email").execute()
+        users = [u for u in (users_result.data or []) if u["user_id"] in customer_ids]
 
-    except HTTPException:
-        raise
+        loyalty_result = supabase.table("loyalty_account").select("user_id,current_points").execute()
+        loyalty_map = {la["user_id"]: la for la in (loyalty_result.data or [])}
+
+        membership_result = supabase.table("membership").select("user_id,tier,status").execute()
+        membership_map = {m["user_id"]: m for m in (membership_result.data or [])}
+
+        members = []
+        for u in users:
+            uid = u["user_id"]
+            la  = loyalty_map.get(uid, {})
+            mem = membership_map.get(uid, {})
+            members.append({
+                "user_id": uid,
+                "name":    f"{u.get('fname', '')} {u.get('lname', '')}".strip(),
+                "email":   u.get("email", ""),
+                "tier":    mem.get("tier", "Bronze"),
+                "points":  la.get("current_points", 0) or 0,
+                "status":  mem.get("status", "active"),
+            })
+
+        return members
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/users/{user_id}")
+def delete_user(user_id: str):
+    try:
+        supabase.table("users").delete().eq("user_id", user_id).execute()
+        return {"message": "User deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
