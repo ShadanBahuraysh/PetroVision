@@ -51,9 +51,11 @@ class EarnPointsRequest(BaseModel):
     amount: float
     tier: str = "Bronze"
     description: Optional[str] = "Points earned from station visit"
+    qr_code: str
 
 
 class RedeemPointsRequest(BaseModel):
     user_id: str
     points: int
     description: Optional[str] = "Points redeemed"
+    offer_id: str

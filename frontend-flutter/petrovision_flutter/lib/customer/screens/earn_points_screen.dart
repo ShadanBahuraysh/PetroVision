@@ -3,14 +3,19 @@ import 'package:flutter/services.dart';
 import '../../services/loyalty_api_service.dart';
 
 class EarnPointsScreen extends StatefulWidget {
-  const EarnPointsScreen({super.key});
+  final String userId;
+
+  const EarnPointsScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
-  State<EarnPointsScreen> createState() => _EarnPointsScreenState();
+  State<EarnPointsScreen> createState() =>
+      _EarnPointsScreenState();
 }
 
 class _EarnPointsScreenState extends State<EarnPointsScreen> {
-  final String userId = "U-0003";
   final String tier = "Bronze";
   final TextEditingController _codeController = TextEditingController();
   bool _isLoading = false;
@@ -125,14 +130,11 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
           ),
         ),
         content: TextField(
-          controller: _codeController,
-          keyboardType: TextInputType.number,
-          maxLength: 12,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-          decoration: InputDecoration(
-            hintText: "12-digit code",
+            controller: _codeController,
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 8,
+            decoration: InputDecoration(
+            hintText: "EFC-0001",
             filled: true,
             fillColor: Colors.grey.shade100,
             border: OutlineInputBorder(
@@ -150,21 +152,33 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
             onPressed: _isLoading
                 ? null
                 : () async {
-                    final code = _codeController.text.trim();
-                    if (code.length < 12) return;
+                    final code = _codeController.text.trim().toUpperCase();
 
-                    Navigator.pop(context);
+                    final regex = RegExp(r'^EFC-[0-9]{4}$');
+
+                    if (!regex.hasMatch(code)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please enter a valid code like EFC-0001"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                        }
+
                     setState(() => _isLoading = true);
 
-                    final result = await LoyaltyApiService.earnPoints(
-                      userId: userId,
+                    final result = await LoyaltyApiService.scanEarnQr(
+                      qrCode: code,
+                      userId: widget.userId,
                       amount: 100,
-                      tier: tier,
                     );
 
-                    setState(() => _isLoading = false);
-
                     if (!mounted) return;
+
+                    Navigator.pop(context);
+
+                    setState(() => _isLoading = false);
                     if (result != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

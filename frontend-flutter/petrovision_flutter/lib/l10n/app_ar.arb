@@ -1,0 +1,142 @@
+{
+  "@@locale": "ar",
+
+  "navHome": "الرئيسية",
+  "navStations": "المحطات",
+  "navPoints": "برنامج الولاء",
+  "navOffers": "العروض",
+
+  "stationsTitle": "المحطات",
+  "noStationsFound": "لا توجد محطات",
+  "specialOffersAtStation": "العروض الخاصة في هذه المحطة:",
+  "workingHours": "ساعات العمل",
+  "contactNumber": "رقم التواصل",
+  "featured": "مميزة",
+
+  "drawerMyProfile": "ملفي الشخصي",
+  "drawerTransactionHistory": "سجل المعاملات",
+  "drawerAboutUs": "من نحن",
+  "drawerTermsConditions": "الشروط والأحكام",
+  "drawerLogout": "تسجيل الخروج",
+  "drawerLanguage": "اللغة",
+
+  "helloUser": "مرحباً، {name}",
+  "@helloUser": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "readyForRefill": "هل أنت مستعد للتعبئة؟",
+  "points": "نقطة",
+
+  "tierStatus": "مستوى {tier}",
+  "@tierStatus": {
+    "placeholders": {
+      "tier": { "type": "String" }
+    }
+  },
+
+  "pointsToNextTier": "نقاط للوصول لمستوى {tier}",
+  "@pointsToNextTier": {
+    "placeholders": {
+      "tier": { "type": "String" }
+    }
+  },
+
+  "nearbyStations": "المحطات القريبة",
+  "specialOffers": "العروض الخاصة",
+  "explore": "استكشف",
+  "doublePointsWeekend": "نقاط مضاعفة في عطلة نهاية الأسبوع",
+  "onAllFuelTypes": "على جميع أنواع الوقود",
+  "claim": "احصل",
+  "redeemOffer": "استبدال العرض",
+  "scanCodeAtStation": "امسح هذا الرمز في المحطة",
+  "close": "إغلاق",
+
+  "transactionHistoryTitle": "سجل المعاملات",
+  "noTransactionsYet": "لا توجد معاملات بعد",
+
+  "offersTitle": "العروض",
+  "noOffersAvailable": "لا توجد عروض متاحة",
+  "earnRedeemPoints": "اكسب {earn} نقطة • استبدل {redeem} نقطة",
+  "@earnRedeemPoints": {
+    "placeholders": {
+      "earn": { "type": "int" },
+      "redeem": { "type": "int" }
+    }
+  },
+
+  "myProfile": "ملفي الشخصي",
+  "personalInformation": "المعلومات الشخصية",
+  "fullNameLabel": "الاسم الكامل",
+  "emailLabel": "البريد الإلكتروني",
+  "phoneLabel": "رقم الهاتف",
+  "cityLabel": "المدينة",
+  "accountSection": "الحساب",
+  "editProfile": "تعديل الملف الشخصي",
+  "updatePersonalInfo": "تحديث معلوماتك الشخصية",
+  "changePassword": "تغيير كلمة المرور",
+  "updateSecurityCredentials": "تحديث بيانات الأمان",
+  "logout": "تسجيل الخروج",
+  "saveChanges": "حفظ التغييرات",
+  "phoneNumber": "رقم الهاتف",
+  "currentPassword": "كلمة المرور الحالية",
+  "newPassword": "كلمة المرور الجديدة",
+  "confirmPassword": "تأكيد كلمة المرور",
+  "updatePassword": "تحديث كلمة المرور",
+
+  "loyaltyProgramTitle": "برنامج الولاء",
+  "yourPoints": "نقاطك",
+  "actions": "الإجراءات",
+  "earn": "اكسب",
+  "redeem": "استبدل",
+
+  "aboutUsTitle": "من نحن",
+  "ourVision": "رؤيتنا",
+  "ourMission": "مهمتنا",
+  "funFacts": "حقائق وإنجازات",
+  "contactUs": "تواصل معنا",
+
+  "termsConditionsTitle": "الشروط والأحكام",
+
+  "aboutUsHeroText": "بيتروفيجن هو رفيقك الذكي في محطات بترومين. اطّلع على أحدث العروض، واكسب النقاط في كل مرة تملأ فيها خزانك، واستبدل مكافآتك فوراً في المحطة أو لدى شركائنا.",
+  "ourVisionDesc": "تحويل تجربة العملاء في محطات الوقود من خلال الجمع بين الراحة والمكافآت والابتكار.",
+  "ourMissionDesc": "تقديم تجربة سلسة وممتعة ومجزية لكل عميل، مع تعزيز العلاقة بين بترومين ومجتمعه.",
+  "achievement1": "أكثر من 50,000 مستخدم راضٍ في عام 2024",
+  "achievement2": "تم استبدال أكثر من مليون نقطة مكافأة",
+  "achievement3": "تعمل في أكثر من 20 محطة في جميع أنحاء المملكة",
+  "achievement4": "إطلاق رؤى مدعومة بالذكاء الاصطناعي لعروض مخصصة",
+  "contactLocation": "جدة، المملكة العربية السعودية",
+
+  "termsWelcome": "مرحباً بك في بيتروفيجن",
+  "termsIntro": "تاريخ السريان: أبريل 2026\nباستخدامك لتطبيقنا، فإنك توافق على هذه الشروط والأحكام. يُرجى قراءتها بعناية.",
+  "termsSec1Title": "1. استخدام التطبيق",
+  "termsSec1P1": "بيتروفيجن مخصص للاستخدام الشخصي غير التجاري.",
+  "termsSec1P2": "يجب أن يكون عمرك 18 عاماً على الأقل لاستخدام التطبيق.",
+  "termsSec1P3": "أنت مسؤول عن الحفاظ على سرية حسابك وكلمة مرورك.",
+  "termsSec2Title": "2. نقاط الولاء والمكافآت",
+  "termsSec2P1": "تُكتسب النقاط بناءً على المعاملات في محطات بترومين والشركاء المشاركين.",
+  "termsSec2P2": "النقاط ليس لها قيمة نقدية ولا يمكن استبدالها بمال.",
+  "termsSec2P3": "يجب استبدال المكافآت عبر التطبيق وهي مرهونة بالتوفر.",
+  "termsSec2P4": "يحتفظ بيتروفيجن بحق تعديل المكافآت أو إلغائها في أي وقت.",
+  "termsSec3Title": "3. العروض والترويجات",
+  "termsSec3P1": "جميع العروض والترويجات خاضعة للشروط التي تضعها محطات بترومين أو شركاؤها.",
+  "termsSec3P2": "بيتروفيجن غير مسؤول عن أي أخطاء أو عدم دقة أو انتهاء صلاحية للعروض.",
+  "termsSec4Title": "4. محتوى المستخدم",
+  "termsSec4P1": "قد يستخدم بيتروفيجن أي محتوى تُرسله لتحسين الخدمات.",
+  "termsSec4P2": "تمنح بيتروفيجن ترخيصاً غير حصري وبدون مقابل مادي لاستخدام محتواك.",
+  "termsSec5Title": "5. الخصوصية",
+  "termsSec5P1": "يخضع استخدامك للتطبيق أيضاً لسياسة الخصوصية الخاصة بنا.",
+  "termsSec6Title": "6. تحديد المسؤولية",
+  "termsSec6P1": "يُقدَّم بيتروفيجن «كما هو» دون أي ضمانات من أي نوع.",
+  "termsSec6P2": "لسنا مسؤولين عن أي أضرار ناتجة عن استخدامك للتطبيق.",
+  "termsSec7Title": "7. الإنهاء",
+  "termsSec7P1": "قد نوقف أو ننهي وصولك إذا انتهكت هذه الشروط والأحكام.",
+  "termsSec7P2": "عند الإنهاء، قد يتم تعطيل حسابك ونقاطك.",
+  "termsSec8Title": "8. تغييرات الشروط",
+  "termsSec8P1": "قد يُحدِّث بيتروفيجن هذه الشروط والأحكام في أي وقت.",
+  "termsSec8P2": "يُعدّ الاستمرار في استخدام التطبيق بعد التغييرات قبولاً للشروط المحدَّثة.",
+  "termsSec9Title": "9. القانون الحاكم",
+  "termsSec9P1": "تخضع هذه الشروط لقوانين الدولة التي تعمل فيها بترومين."
+}

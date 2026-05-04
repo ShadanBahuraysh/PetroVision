@@ -11,14 +11,15 @@ class AdminShell extends StatelessWidget {
   final VoidCallback? onExport;
 
   const AdminShell({
-    super.key,
-    required this.selectedIndex,
-    required this.title,
-    required this.subtitle,
-    required this.child,
-    this.showExportButton = true,
-    this.onExport,
-  });
+  super.key,
+  required this.selectedIndex,
+  required this.title,
+  required this.subtitle,
+  required this.child,
+
+  this.showExportButton = true,
+  this.onExport,
+});
 
   static const List<_NavItem> _items = [
     _NavItem(label: 'Dashboard', icon: Icons.insert_chart_outlined_rounded, route: '/'),
@@ -42,20 +43,21 @@ class AdminShell extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      height: 44,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
+    width: double.infinity,
+    alignment: Alignment.centerLeft,
+    padding: const EdgeInsets.only(top: 6, bottom: 2),
+    child: Image.asset(
+      'assets/images/AdminPageLogo.png',
+      height: 75,
+      fit: BoxFit.contain,
+    ),
+  ),
+  Divider(
+    color: Colors.grey.withOpacity(0.2),
+    thickness: 1,
+    height: 15,
+  ),
+  const SizedBox(height: 10),
 
                   ...List.generate(_items.length, (index) {
                     final item = _items[index];
@@ -75,7 +77,8 @@ class AdminShell extends StatelessWidget {
 
                   const Spacer(),
 
-                  const _AccountSection(),
+                   _AccountSection(
+                  ),
                 ],
               ),
             ),
@@ -112,7 +115,7 @@ class AdminShell extends StatelessWidget {
     foregroundColor: const WidgetStatePropertyAll(Colors.white),
   ),
   icon: const Icon(Icons.download_rounded, size: 18),
-  label: const Text('Export'), // ✅ THIS LINE IS REQUIRED
+  label: const Text('Export'), 
 ),
                           ),
                       ],
@@ -151,7 +154,8 @@ class AdminShell extends StatelessWidget {
 }
 
 class _AccountSection extends StatefulWidget {
-  const _AccountSection();
+  
+    _AccountSection();
 
   @override
   State<_AccountSection> createState() => _AccountSectionState();
@@ -196,7 +200,6 @@ class _AccountSectionState extends State<_AccountSection> {
                 ],
               ),
 
-              /// ✅ HERE IS THE CHANGE
               child: _LogoutTile(onTap: _logout),
             ),
           ),
@@ -250,26 +253,42 @@ class _AccountSectionState extends State<_AccountSection> {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: Colors.white12),
         ),
-        child: const Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person_outline_rounded, color: Color(0xFF132935)),
+child: Row(
+  children: [
+    CircleAvatar(
+      radius: 22,
+      backgroundColor: Colors.white,
+      child: Icon(
+        Icons.person_outline_rounded,
+        color: Color(0xFF132935),
+      ),
+    ),
+
+    SizedBox(width: 12),
+
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Admin",
+            style: TextStyle(color: Colors.white),
+          ),
+
+          SizedBox(height: 2),
+
+          Text(
+            "Hidden Email",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
             ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Admin User', style: TextStyle(color: Colors.white)),
-                  SizedBox(height: 2),
-                  Text('admin@petro.com', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    ),
+  ],
+),
       ),
     );
   }

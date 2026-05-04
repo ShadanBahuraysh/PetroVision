@@ -1,23 +1,41 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../widgets/admin_shell.dart';
 import '../widgets/dashboard_widgets.dart';
 import '../widgets/interactive_widgets.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final String? userId;
+
+  const SettingsScreen({
+    super.key,
+    this.userId,
+  });
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Email Notifications toggle removed — only these two remain
-  bool _alertSounds   = true;
-  bool _weeklyReports = false;
+  static const String baseUrl = "http://127.0.0.1:8000";
 
-  final _firstNameController = TextEditingController(text: 'Admin');
-  final _lastNameController  = TextEditingController(text: 'User');
-  final _emailController     = TextEditingController(text: 'admin@petro.com');
-  final _phoneController     = TextEditingController(text: '+966 5X XXX XXXX');
+  bool isLoading = true;
+  List<Map<String, dynamic>> admins = [];
+  Map<String, dynamic>? currentAdmin;
+
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _jobNumberController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdmins();
+  }
 
   @override
   void dispose() {
@@ -25,7 +43,313 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _jobNumberController.dispose();
     super.dispose();
+  }
+  
+String _extractErrorMessage(http.Response res) {
+  try {
+    final data = jsonDecode(res.body);
+
+    if (data is Map && data["detail"] != null) {
+      final detail = data["detail"].toString();
+
+      if (detail.toLowerCase().contains("duplicate") ||
+          detail.toLowerCase().contains("already exists")) {
+        return "This email is already used by another account";
+      }
+
+      return detail;
+    }
+  } catch (_) {}
+
+  return "Something went wrong. Please try again.";
+}
+
+void _showSnack(String message, {bool success = false}) {
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: success ? Colors.green : Colors.red,
+    ),
+  );
+}
+  Future<void> _loadAdmins() async {
+    try {
+      final res = await http.get(Uri.parse("$baseUrl/auth/admins"));
+
+      if (res.statusCode == 200) {
+        final List data = jsonDecode(res.body);
+
+        admins = data.map((e) => Map<String, dynamic>.from(e)).toList();
+
+        if (widget.userId != null) {
+          currentAdmin = admins.firstWhere(
+            (a) => a["user_id"] == widget.userId,
+            orElse: () => admins.isNotEmpty ? admins.first : {},
+          );
+        } else {
+          currentAdmin = admins.isNotEmpty ? admins.first : {};
+        }
+
+        _fillProfileFields();
+      }
+    } catch (e) {
+      debugPrint("load admins error: $e");
+    }
+
+    if (!mounted) return;
+    setState(() => isLoading = false);
+  }
+
+  void _fillProfileFields() {
+    final admin = currentAdmin ?? {};
+
+    final name = (admin["name"] ?? "").toString().trim();
+    final parts = name.split(" ");
+
+    _firstNameController.text = parts.isNotEmpty ? parts.first : "";
+    _lastNameController.text = parts.length > 1 ? parts.sublist(1).join(" ") : "";
+
+    _emailController.text = admin["email"] ?? "";
+    _phoneController.text = admin["phone"] ?? "";
+    _jobNumberController.text = admin["job_number"] ?? "";
+  }
+
+  Future<void> _updateCurrentAdmin() async {
+    if (currentAdmin == null || currentAdmin!["user_id"] == null) return;
+
+    try {
+      final res = await http.put(
+        Uri.parse("$baseUrl/auth/admins/${currentAdmin!["user_id"]}"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "fname": _firstNameController.text.trim(),
+          "lname": _lastNameController.text.trim(),
+          "email": _emailController.text.trim(),
+          "phone": _phoneController.text.trim(),
+          "job_number": _jobNumberController.text.trim(),
+        }),
+      );
+
+      if (!mounted) return;
+
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Admin profile updated successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _loadAdmins();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Update failed: ${res.body}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("update admin error: $e");
+    }
+  }
+
+  Future<void> _addAdmin({
+  required String fname,
+  required String lname,
+  required String email,
+  required String phone,
+  required String password,
+  required String jobNumber,
+}) async {
+  try {
+    final res = await http.post(
+      Uri.parse("$baseUrl/auth/admins"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "fname": fname,
+        "lname": lname,
+        "email": email,
+        "phone": phone,
+        "password": password,
+        "role": "admin",
+        "job_number": jobNumber,
+      }),
+    );
+
+    if (!mounted) return;
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      Navigator.pop(context);
+      _showSnack("Admin added successfully", success: true);
+      _loadAdmins();
+    } else {
+      _showSnack("❌ ${_extractErrorMessage(res)}");
+    }
+  } catch (e) {
+    _showSnack("❌ Connection error. Please try again.");
+  }
+}
+
+  Future<void> _editAdmin(Map<String, dynamic> admin) async {
+    final fnameController = TextEditingController();
+    final lnameController = TextEditingController();
+    final emailController = TextEditingController(text: admin["email"] ?? "");
+    final phoneController = TextEditingController(text: admin["phone"] ?? "");
+    final jobController = TextEditingController(text: admin["job_number"] ?? "");
+
+    final name = (admin["name"] ?? "").toString().trim();
+    final parts = name.split(" ");
+    fnameController.text = parts.isNotEmpty ? parts.first : "";
+    lnameController.text = parts.length > 1 ? parts.sublist(1).join(" ") : "";
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFFF8FAFC),
+        shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        ),
+        title: const Text("Edit Admin"),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _dialogField("First Name", fnameController),
+              const SizedBox(height: 12),
+              _dialogField("Last Name", lnameController),
+              const SizedBox(height: 12),
+              _dialogField("Email", emailController),
+              const SizedBox(height: 12),
+              _dialogField("Phone", phoneController),
+              const SizedBox(height: 12),
+              _dialogField("Job Number", jobController),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+  style: TextButton.styleFrom(
+    foregroundColor: const Color(0xFF4195AF),
+    textStyle: const TextStyle(
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+  onPressed: () => Navigator.pop(context),
+  child: const Text("Cancel"),
+),
+          FilledButton(
+  style: FilledButton.styleFrom(
+    backgroundColor: const Color(0xFF132935),
+    foregroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+    ),
+  ),
+  onPressed: () async {
+    final res = await http.put(
+      Uri.parse("$baseUrl/auth/admins/${admin["user_id"]}"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "fname": fnameController.text.trim(),
+        "lname": lnameController.text.trim(),
+        "email": emailController.text.trim(),
+        "phone": phoneController.text.trim(),
+        "job_number": jobController.text.trim(),
+      }),
+    );
+
+    if (!mounted) return;
+
+    if (res.statusCode == 200) {
+      Navigator.pop(context);
+      _loadAdmins();
+      _showSnack("Admin updated successfully", success: true);
+    } else {
+      _showSnack("❌ ${_extractErrorMessage(res)}");
+    }
+  },
+  child: const Text("Save"),
+),
+        ],
+      ),
+    );
+  }
+
+  void _showAddAdminDialog() {
+    final fnameController = TextEditingController();
+    final lnameController = TextEditingController();
+    final emailController = TextEditingController();
+    final phoneController = TextEditingController();
+    final passwordController = TextEditingController();
+    final jobController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFFF8FAFC),
+        shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+        title: const Text("Add Admin"),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _dialogField("First Name", fnameController),
+              const SizedBox(height: 12),
+              _dialogField("Last Name", lnameController),
+              const SizedBox(height: 12),
+              _dialogField("Email", emailController),
+              const SizedBox(height: 12),
+              _dialogField("Phone", phoneController),
+              const SizedBox(height: 12),
+              _dialogField("Password", passwordController, obscure: true),
+              const SizedBox(height: 12),
+              _dialogField("Job Number", jobController),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+  style: TextButton.styleFrom(
+    foregroundColor: const Color(0xFF4195AF),
+    textStyle: const TextStyle(
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+  onPressed: () => Navigator.pop(context),
+  child: const Text("Cancel"),
+),
+          FilledButton(
+            style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF132935),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),),
+            onPressed: () {
+              _addAdmin(
+                fname: fnameController.text.trim(),
+                lname: lnameController.text.trim(),
+                email: emailController.text.trim(),
+                phone: phoneController.text.trim(),
+                password: passwordController.text.trim(),
+                jobNumber: jobController.text.trim(),
+              );
+            },
+            child: const Text("Add"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -33,205 +357,373 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return AdminShell(
       selectedIndex: 3,
       title: 'Settings',
-      subtitle: 'Update admin preferences and system defaults.',
+      subtitle: 'Manage admin profile and administrator accounts.',
       showExportButton: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: SectionCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _sectionHeader(
+                              Icons.person_outline_rounded,
+                              'Profile Settings',
+                              'Update current admin information.',
+                            ),
+                            const SizedBox(height: 22),
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: const Color(0xFF132935),
+                                  child: Text(
+                                    (_firstNameController.text.isNotEmpty
+                                            ? _firstNameController.text[0]
+                                            : "A")
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "${_firstNameController.text} ${_lastNameController.text}",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _emailController.text,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            const Divider(color: Color(0xFFE5E7EB)),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(child: _field('First Name', _firstNameController)),
+                                const SizedBox(width: 16),
+                                Expanded(child: _field('Last Name', _lastNameController)),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _field(
+                                    'Email Address',
+                                    _emailController,
+                                    icon: Icons.email_outlined,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _field(
+                                    'Phone Number',
+                                    _phoneController,
+                                    icon: Icons.phone_outlined,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            _field(
+                              'Job Number',
+                              TextEditingController(text: "*******"),
+                              icon: Icons.badge_outlined,
+                            ),
+                            const SizedBox(height: 24),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: FilledButton(
+                                onPressed: _updateCurrentAdmin,
+                                style: darkDesktopButtonStyle(),
+                                child: const Text('Save Changes'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 2,
+                      child: SectionCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _sectionHeader(
+                                  Icons.admin_panel_settings_outlined,
+                                  'Admin Management',
+                                  'Add and edit administrator accounts.',
+                                ),
+                                FilledButton.icon(
+                                  onPressed: _showAddAdminDialog,
+                                  icon: const Icon(Icons.add, size: 18),
+                                  label: const Text("Add Admin"),
+                                  style: darkDesktopButtonStyle(),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 22),
+                            ...admins.map((admin) => _adminTile(admin)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                SectionCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader(
+                        Icons.info_outline_rounded,
+                        'System Information',
+                        'Current platform and version details.',
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _infoTile(
+                              'Platform Version',
+                              'PetroVision v2.4.1',
+                              Icons.rocket_launch_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _infoTile(
+                              'Backend Status',
+                              'Connected',
+                              Icons.cloud_done_outlined,
+                              valueColor: const Color(0xFF22C55E),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _infoTile(
+                              'ML Model',
+                              'XGBoost v2 — Active',
+                              Icons.psychology_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _adminTile(Map<String, dynamic> admin) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F7F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
         children: [
-          // Profile + Notifications side by side
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Profile Card ──────────────────────────────────────────────
-              Expanded(
-                flex: 3,
-                child: SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionHeader(Icons.person_outline_rounded, 'Profile Settings', 'Update your personal details.'),
-                      const SizedBox(height: 22),
-                      // Avatar row
-                      Row(children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: const Color(0xFF132935),
-                          child: const Text('A',
-                              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
-                        ),
-                        const SizedBox(width: 16),
-                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('Admin User',
-                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF111827))),
-                          const SizedBox(height: 4),
-                          Text('System Administrator',
-                              style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-                        ]),
-                      ]),
-                      const SizedBox(height: 24),
-                      const Divider(color: Color(0xFFE5E7EB)),
-                      const SizedBox(height: 20),
-                      Row(children: [
-                        Expanded(child: _field('First Name', _firstNameController)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _field('Last Name', _lastNameController)),
-                      ]),
-                      const SizedBox(height: 16),
-                      Row(children: [
-                        Expanded(child: _field('Email Address', _emailController, icon: Icons.email_outlined)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _field('Phone Number', _phoneController, icon: Icons.phone_outlined)),
-                      ]),
-                      const SizedBox(height: 24),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton(
-                          onPressed: () {},
-                          style: darkDesktopButtonStyle(),
-                          child: const Text('Save Changes'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 20),
-
-              // ── Notifications Card (Email toggle removed) ─────────────────
-              Expanded(
-                flex: 2,
-                child: SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionHeader(Icons.notifications_outlined, 'Notifications', 'Manage how you receive alerts.'),
-                      const SizedBox(height: 22),
-                      _switchTile(
-                        title: 'Alert Sounds',
-                        subtitle: 'Enable sound for critical station alerts.',
-                        icon: Icons.volume_up_outlined,
-                        value: _alertSounds,
-                        onChanged: (v) => setState(() => _alertSounds = v),
-                      ),
-                      const SizedBox(height: 14),
-                      _switchTile(
-                        title: 'Weekly Reports',
-                        subtitle: 'Get a weekly summary of station performance.',
-                        icon: Icons.summarize_outlined,
-                        value: _weeklyReports,
-                        onChanged: (v) => setState(() => _weeklyReports = v),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          const CircleAvatar(
+            radius: 18,
+            backgroundColor: Color(0xFF132935),
+            child: Icon(Icons.person, color: Colors.white, size: 18),
           ),
-          const SizedBox(height: 22),
-
-          // ── System Info Card ───────────────────────────────────────────────
-          SectionCard(
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionHeader(Icons.info_outline_rounded, 'System Information', 'Current platform and version details.'),
-                const SizedBox(height: 22),
-                Row(children: [
-                  Expanded(child: _infoTile('Platform Version', 'PetroVision v2.4.1', Icons.rocket_launch_outlined)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _infoTile('Backend Status', 'Connected', Icons.cloud_done_outlined, valueColor: const Color(0xFF22C55E))),
-                  const SizedBox(width: 16),
-                  Expanded(child: _infoTile('ML Model', 'XGBoost v2 — Active', Icons.psychology_outlined)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _infoTile('Last Sync', 'Today, 10:14 AM', Icons.sync_rounded)),
-                ]),
+                Text(
+                  admin["name"] ?? "Admin",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "${admin["email"] ?? ""} • Job Number Hidden",
+                  style: const TextStyle(
+                    color: Color(0xFF8A959E),
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
+          ),
+          IconButton(
+            onPressed: () => _editAdmin(admin),
+            icon: const Icon(Icons.edit_outlined, color: Color(0xFF4195AF)),
           ),
         ],
       ),
     );
   }
 
+  Widget _dialogField(
+    String label,
+    TextEditingController controller, {
+    bool obscure = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+  labelText: label,
+  labelStyle: const TextStyle(
+    color: Color(0xFF6B7280),
+    fontWeight: FontWeight.w500,
+  ),
+
+  prefixIconColor: const Color(0xFF132935),
+
+  filled: true,
+  fillColor: Colors.white,
+
+  contentPadding: const EdgeInsets.symmetric(
+    horizontal: 16,
+    vertical: 16,
+  ),
+
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: const BorderSide(
+      color: Color(0xFFE2E8F0),
+    ),
+  ),
+
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: const BorderSide(
+      color: Color(0xFFE2E8F0),
+    ),
+  ),
+
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: const BorderSide(
+      color: Color(0xFF132935),
+      width: 1.5,
+    ),
+  ),
+),
+    );
+  }
+
   Widget _sectionHeader(IconData icon, String title, String subtitle) {
-    return Row(children: [
-      Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF132935).withOpacity(0.08),
-          borderRadius: BorderRadius.circular(12),
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF132935).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: const Color(0xFF132935), size: 20),
         ),
-        child: Icon(icon, color: const Color(0xFF132935), size: 20),
-      ),
-      const SizedBox(width: 12),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title,    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-        Text(subtitle, style: const TextStyle(fontSize: 13, color: Color(0xFF8A959E))),
-      ]),
-    ]);
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+              ),
+            ),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF8A959E),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _field(String label, TextEditingController controller, {IconData? icon}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF374151))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF132935)),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF132935),
+          ),
           decoration: InputDecoration(
-            prefixIcon: icon != null ? Icon(icon, size: 18, color: const Color(0xFF4195AF)) : null,
+            prefixIcon: icon != null
+                ? Icon(icon, size: 18, color: const Color(0xFF4195AF))
+                : null,
             filled: true,
             fillColor: const Color(0xFFF6F7F9),
-            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFF4195AF), width: 1.5)),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: Color(0xFF4195AF),
+                width: 1.5,
+              ),
+            ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _switchTile({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: value ? const Color(0xFF132935).withOpacity(0.04) : const Color(0xFFF6F7F9),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: value ? const Color(0xFF132935).withOpacity(0.15) : const Color(0xFFE5E7EB),
-        ),
-      ),
-      child: Row(children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: value ? const Color(0xFF132935) : const Color(0xFFE5E7EB),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 16, color: value ? Colors.white : const Color(0xFF6B7280)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title,    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF111827))),
-          const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(color: Color(0xFF8A959E), fontSize: 12)),
-        ])),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: const Color(0xFF132935),
-        ),
-      ]),
     );
   }
 
@@ -243,26 +735,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: Row(children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF4195AF)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF8A959E),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: valueColor ?? const Color(0xFF132935),
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF4195AF)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF8A959E), fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(
-            fontWeight: FontWeight.w700, fontSize: 13,
-            color: valueColor ?? const Color(0xFF132935),
-          )),
-        ])),
-      ]),
+        ],
+      ),
     );
   }
 }

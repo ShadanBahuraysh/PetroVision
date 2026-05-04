@@ -20,10 +20,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _confirmPasswordController = TextEditingController();
 
   String? _emailError;
-  String? _otpError;
   String? _passwordError;
 
-  bool _otpSent = false;
+  bool _otpConfirmed = false;
   bool _otpVerified = false;
   bool _isLoading = false;
   bool _passwordVisible = false;
@@ -46,7 +45,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return null;
   }
 
-  // ── الخطوة 1: إرسال OTP ──────────────────────────────────
   Future<void> _onSendOtp() async {
     final error = _validateEmail(_emailController.text);
     setState(() => _emailError = error);
@@ -59,10 +57,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': _emailController.text.trim()}),
       );
-
       if (response.statusCode == 200) {
-        setState(() => _otpSent = true);
-      } else {
+  setState(() => _otpConfirmed = true);
+} else {
         final data = json.decode(response.body);
         setState(() => _emailError = data['detail'] ?? 'Email not found');
       }
@@ -73,12 +70,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
-  // ── الخطوة 2: تحقق من OTP وتغيير الباسوورد ──────────────
   Future<void> _onResetPassword() async {
-    if (_otpController.text.trim().isEmpty) {
-      setState(() => _otpError = "OTP is required");
-      return;
-    }
     if (_newPasswordController.text.length < 8) {
       setState(() => _passwordError = "Password must be at least 8 characters");
       return;
@@ -87,7 +79,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() => _passwordError = "Passwords do not match");
       return;
     }
-
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
@@ -99,15 +90,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           'new_password': _newPasswordController.text,
         }),
       );
-
       if (response.statusCode == 200) {
         setState(() => _otpVerified = true);
       } else {
         final data = json.decode(response.body);
-        setState(() => _otpError = data['detail'] ?? 'Invalid OTP');
+        setState(() => _passwordError = data['detail'] ?? 'Reset failed');
       }
     } catch (e) {
-      setState(() => _otpError = 'Connection error. Try again.');
+      setState(() => _passwordError = 'Connection error. Try again.');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -135,15 +125,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 30),
           child: _otpVerified
               ? _buildSuccessState()
-              : _otpSent
-                  ? _buildOtpState()
+              : _otpConfirmed
+                  ? _buildNewPasswordState()
                   : _buildEmailState(),
         ),
       ),
     );
   }
 
-  // ── حالة 1: إدخال الإيميل ────────────────────────────────
   Widget _buildEmailState() {
     return Column(
       children: [
@@ -158,8 +147,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: 10),
         Text("Enter your email and we'll send you\na verification code.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 14, height: 1.5)),
         const SizedBox(height: 45),
-        _buildField("Email Address", _emailController, Icons.email_outlined, errorText: _emailError,
-          onChanged: (v) => setState(() => _emailError = _validateEmail(v))),
+        _buildField("Email Address", _emailController, Icons.email_outlined,
+          errorText: _emailError, onChanged: (v) => setState(() => _emailError = _validateEmail(v))),
         const SizedBox(height: 40),
         SizedBox(
           width: 240, height: 50,
@@ -180,29 +169,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  // ── حالة 2: إدخال OTP وباسوورد جديد ─────────────────────
-  Widget _buildOtpState() {
+  Widget _buildNewPasswordState() {
     return Column(
       children: [
         const SizedBox(height: 40),
         Container(
           height: 80, width: 80,
           decoration: BoxDecoration(color: accentBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(24)),
-          child: Icon(Icons.verified_outlined, color: accentBlue, size: 40),
+          child: Icon(Icons.lock_reset_rounded, color: accentBlue, size: 40),
         ),
         const SizedBox(height: 30),
-        Text("Check your email", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: primaryNavy, letterSpacing: -0.5)),
+        Text("New Password", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: primaryNavy, letterSpacing: -0.5)),
         const SizedBox(height: 10),
-        Text("We sent a code to\n${_emailController.text.trim()}", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 14, height: 1.5)),
+        Text("Enter your new password below.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 14, height: 1.5)),
         const SizedBox(height: 35),
-
-        // OTP field
-        _buildField("Verification Code", _otpController, Icons.pin_outlined,
-          errorText: _otpError, keyboardType: TextInputType.number,
-          onChanged: (v) => setState(() => _otpError = null)),
+        _buildField(
+        "OTP Code",
+        _otpController,
+        Icons.mark_email_read_outlined,
+        keyboardType: TextInputType.number,
+        ),
         const SizedBox(height: 20),
-
-        // New Password
         _buildField("New Password", _newPasswordController, Icons.lock_outline,
           errorText: _passwordError, obscure: !_passwordVisible,
           suffixIcon: IconButton(
@@ -211,11 +198,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           onChanged: (v) => setState(() => _passwordError = null)),
         const SizedBox(height: 20),
-
-        // Confirm Password
         _buildField("Confirm Password", _confirmPasswordController, Icons.lock_outline,
           obscure: true, onChanged: (v) => setState(() => _passwordError = null)),
-
         const SizedBox(height: 40),
         SizedBox(
           width: 240, height: 50,
@@ -227,18 +211,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 : const Text("Reset Password", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ),
-        const SizedBox(height: 20),
-        GestureDetector(
-          onTap: () => setState(() => _otpSent = false),
-          child: Text("Try different email", style: TextStyle(color: accentBlue, fontWeight: FontWeight.w700, fontSize: 14)),
-        ),
       ],
     );
   }
 
-  // ── حالة 3: نجاح ─────────────────────────────────────────
   Widget _buildSuccessState() {
-    return Column(
+    return Center(
+    child:Column(
       children: [
         const SizedBox(height: 80),
         Container(
@@ -260,10 +239,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       ],
+    ),
     );
   }
 
-  // ── Field Builder ─────────────────────────────────────────
   Widget _buildField(String label, TextEditingController controller, IconData icon, {
     String? errorText, bool obscure = false, Function(String)? onChanged,
     TextInputType? keyboardType, Widget? suffixIcon,

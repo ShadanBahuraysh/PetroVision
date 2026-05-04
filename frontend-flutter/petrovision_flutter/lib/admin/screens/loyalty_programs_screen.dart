@@ -76,6 +76,7 @@ class _LoyaltyProgramsScreenState extends State<LoyaltyProgramsScreen> {
       selectedIndex: 1,
       title: 'Loyalty Programs',
       subtitle: 'Manage offers, points, and QR codes for earn and redeem.',
+      showExportButton: false,
       child: _loading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF132935)))
           : _error != null

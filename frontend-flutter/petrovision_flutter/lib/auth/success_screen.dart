@@ -3,14 +3,22 @@ import 'package:flutter/material.dart';
 import '../customer/screens/home_page.dart';
 
 class SuccessScreen extends StatefulWidget {
-  const SuccessScreen({super.key});
+   final String userId;
+  final String name;
+  final String email;
+
+  const SuccessScreen({
+    super.key,
+    required this.userId,
+    required this.name,
+    required this.email,
+  });
 
   @override
   State<SuccessScreen> createState() => _SuccessScreenState();
 }
 
 class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateMixin {
-  // الألوان الموحدة
   final Color primaryNavy = const Color(0xFF1A2E35); 
   final Color accentBlue = const Color(0xFF4195AF);
   final Color scaffoldBg = const Color(0xFFFBFBFB);
@@ -30,7 +38,13 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(
+  builder: (context) => HomePage(
+    userId: widget.userId,
+    name: widget.name,
+    email: widget.email,
+  ),
+),
         );
       }
     });
@@ -50,7 +64,6 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // اللوجو بتأثير نبض هادئ وحواف مطابقة للهوم بيج
             ScaleTransition(
               scale: Tween(begin: 0.98, end: 1.05).animate(
                 CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
@@ -75,7 +88,7 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
             
             const SizedBox(height: 40),
             
-            // اسم التطبيق بستايل الـ AppBar
+           
             Text(
               "PETROVISION",
               style: TextStyle(
@@ -99,7 +112,6 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
             
             const SizedBox(height: 60),
             
-            // النقاط المتحركة بلون الـ Accent
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (index) {

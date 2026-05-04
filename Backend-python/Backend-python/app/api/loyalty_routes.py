@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
-
 from app.supabase_client import supabase
 from app.patterns.strategy.point_calculation import PointCalculation
 from app.schemas.loyalty_schema import EarnPointsRequest, RedeemPointsRequest
@@ -67,10 +66,26 @@ def earn_points(data: EarnPointsRequest):
     try:
         if data.amount <= 0:
             raise HTTPException(status_code=400, detail="Amount must be greater than zero")
+        
+        offer_result = (
+            supabase.table("offer")
+            .select("*")
+            .eq("earn_qr_code", data.qr_code)
+            .execute()
+        )
 
+        if not offer_result.data:
+            raise HTTPException(status_code=404, detail="Invalid QR code")
+
+        offer = offer_result.data[0]
+
+        if offer.get("is_used"):
+             raise HTTPException(status_code=400, detail="QR code already used")
+        
+        base_points = offer.get("earn_points", 0) or 0
         point_calculator = PointCalculation()
         point_calculator.set_strategy_by_tier(data.tier)
-        earned_points = point_calculator.calculate(data.amount)
+        earned_points = point_calculator.calculate(base_points)
 
         account_result = (
             supabase.table("loyalty_account")
@@ -85,14 +100,24 @@ def earn_points(data: EarnPointsRequest):
         account = account_result.data[0]
         account_id = account["account_id"]
         current_points = account.get("current_points", 0) or 0
+        
         new_points = current_points + earned_points
-
+        
         update_result = (
             supabase.table("loyalty_account")
             .update({"current_points": new_points})
             .eq("account_id", account_id)
             .execute()
         )
+
+        try:
+             supabase.table("offer").update({
+                "is_used": True,
+                "user_id": data.user_id
+            }).eq("offer_id", offer["offer_id"]).execute()
+
+        except Exception as offer_error:
+            print("Offer update failed:", offer_error)
 
         try:
             supabase.table("transactions").insert({
@@ -102,7 +127,9 @@ def earn_points(data: EarnPointsRequest):
                 "points": earned_points,
                 "type": "earn",
                 "station_id": data.station_id,
-                "account_id": account_id
+                "account_id": account_id,
+                "offer_id":offer["offer_id"],
+
             }).execute()
         except Exception as transaction_error:
             print("Transaction insert failed:", transaction_error)
@@ -127,7 +154,7 @@ def earn_points(data: EarnPointsRequest):
 @router.post("/redeem-points")
 def redeem_points(data: RedeemPointsRequest):
     try:
-        if data.points <= 0:
+        if data.points < 0:
             raise HTTPException(status_code=400, detail="Points must be greater than zero")
 
         account_result = (
@@ -143,6 +170,17 @@ def redeem_points(data: RedeemPointsRequest):
         account = account_result.data[0]
         account_id = account["account_id"]
         current_points = account.get("current_points", 0) or 0
+        offer_result = (
+                supabase.table("offer")
+                .select("*")
+                .eq("offer_id", data.offer_id)
+                .execute()
+            )
+
+        if not offer_result.data:
+            raise HTTPException(status_code=404, detail="Offer not found")
+
+        offer = offer_result.data[0]
 
         if current_points < data.points:
             raise HTTPException(status_code=400, detail="Not enough points")
@@ -164,13 +202,16 @@ def redeem_points(data: RedeemPointsRequest):
                 "points": data.points,
                 "type": "redeem",
                 "station_id": None,
-                "account_id": account_id
+                "account_id": account_id,
+                "offer_id": data.offer_id
             }).execute()
         except Exception as transaction_error:
             print("Transaction insert failed:", transaction_error)
 
         return {
             "message": "Points redeemed successfully",
+            "offer_name": offer.get("name"),
+            "redeem_qr_code": offer.get("redeem_qr_code"),
             "user_id": data.user_id,
             "account_id": account_id,
             "redeemed_points": data.points,

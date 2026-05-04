@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:r/l10n/app_localizations.dart';
 import 'earn_points_screen.dart';
 import 'redeem_points_screen.dart';
 import '../../services/loyalty_api_service.dart';
 
 class LoyaltyDashboardScreen extends StatefulWidget {
-  const LoyaltyDashboardScreen({super.key});
+  final String userId;
+
+  const LoyaltyDashboardScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
-  State<LoyaltyDashboardScreen> createState() => _LoyaltyDashboardScreenState();
+  State<LoyaltyDashboardScreen> createState() =>
+      _LoyaltyDashboardScreenState();
 }
 
 class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
@@ -15,7 +22,6 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
   String tier = "Bronze";
   bool isLoading = true;
 
-  final String userId = "U-0003";
 
   @override
   void initState() {
@@ -24,8 +30,8 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
   }
 
   Future<void> _loadData() async {
-    final points = await LoyaltyApiService.getPoints(userId);
-    final membership = await LoyaltyApiService.getMembership(userId);
+    final points = await LoyaltyApiService.getPoints(widget.userId);
+    final membership = await LoyaltyApiService.getMembership(widget.userId);
     setState(() {
       currentPoints = points;
       tier = membership?["tier"] ?? "Bronze";
@@ -38,28 +44,15 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
     const Color primaryNavy = Color(0xFF1A2E35);
     const Color accentBlue = Color(0xFF4195AF);
     const Color scaffoldBg = Color(0xFFFBFBFB);
+    final l10n = AppLocalizations.of(context)!;
 
-    int nextTarget = tier == "Gold" ? 2000 : 1000;
-    String nextTier = tier == "Bronze" ? "Silver" : "Gold";
-    double progress = (currentPoints / nextTarget).clamp(0.0, 1.0);
+    final int nextTarget = tier == "Gold" ? 2000 : 1000;
+    final String nextTier = tier == "Bronze" ? "Silver" : "Gold";
+    final double progress = (currentPoints / nextTarget).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: scaffoldBg,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          "LOYALTY PROGRAM",
-          style: TextStyle(
-            color: primaryNavy,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-            letterSpacing: 2,
-          ),
-        ),
-      ),
+      
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -74,17 +67,32 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Your Points",
-                              style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
+                          Text(
+                            l10n.yourPoints,
+                            style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                          ),
                           const SizedBox(height: 4),
-                          Text("$currentPoints",
-                              style: const TextStyle(color: accentBlue, fontWeight: FontWeight.w900, fontSize: 26)),
+                          Text(
+                            "$currentPoints",
+                            style: const TextStyle(
+                                color: accentBlue,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 26),
+                          ),
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(14)),
-                        child: Text(tier, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(14)),
+                        child: Text(tier,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 12)),
                       ),
                     ],
                   ),
@@ -100,13 +108,27 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("${tier.toUpperCase()} STATUS",
-                            style: const TextStyle(color: Colors.black54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                        Text(
+                          l10n.tierStatus(tier.toUpperCase()),
+                          style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1),
+                        ),
                         const SizedBox(height: 6),
-                        Text("$currentPoints / $nextTarget",
-                            style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900)),
-                        Text("Points to $nextTier Tier",
-                            style: const TextStyle(color: Colors.black45, fontSize: 13)),
+                        Text(
+                          "$currentPoints / $nextTarget",
+                          style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900),
+                        ),
+                        Text(
+                          l10n.pointsToNextTier(nextTier),
+                          style: const TextStyle(
+                              color: Colors.black45, fontSize: 13),
+                        ),
                         const SizedBox(height: 10),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
@@ -121,24 +143,49 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 35),
-                  const Text("Actions",
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: primaryNavy)),
+                  Text(
+                    l10n.actions,
+                    style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: primaryNavy),
+                  ),
                   const SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(
                         child: InkWell(
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EarnPointsScreen())),
+                          onTap: () async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => EarnPointsScreen(
+        userId: widget.userId,
+      ),
+    ),
+  );
+
+  _loadData();
+},
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             height: 100,
-                            decoration: BoxDecoration(color: accentBlue.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
-                            child: const Column(
+                            decoration: BoxDecoration(
+                                color: accentBlue.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_rounded, color: accentBlue, size: 26),
-                                SizedBox(height: 8),
-                                Text("Earn", style: TextStyle(color: accentBlue, fontWeight: FontWeight.w700, fontSize: 13)),
+                                const Icon(Icons.add_rounded,
+                                    color: accentBlue, size: 26),
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n.earn,
+                                  style: const TextStyle(
+                                      color: accentBlue,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13),
+                                ),
                               ],
                             ),
                           ),
@@ -147,17 +194,37 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: InkWell(
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RedeemPointsScreen())),
+                          onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RedeemPointsScreen(
+                                userId: widget.userId,
+                              ),
+                            ),
+                          );
+
+                          _loadData();
+                        },
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             height: 100,
-                            decoration: BoxDecoration(color: primaryNavy.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
-                            child: const Column(
+                            decoration: BoxDecoration(
+                                color: primaryNavy.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.card_giftcard_rounded, color: primaryNavy, size: 26),
-                                SizedBox(height: 8),
-                                Text("Redeem", style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w700, fontSize: 13)),
+                                const Icon(Icons.card_giftcard_rounded,
+                                    color: primaryNavy, size: 26),
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n.redeem,
+                                  style: const TextStyle(
+                                      color: primaryNavy,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13),
+                                ),
                               ],
                             ),
                           ),

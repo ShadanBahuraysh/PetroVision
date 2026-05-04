@@ -94,7 +94,6 @@ class _SignupScreenState extends State<SignupScreen> {
       final fname = nameParts.first;
       final lname = nameParts.length > 1 ? nameParts.last : '';
 
-      // تسجيل الحساب
       final signupResponse = await http.post(
         Uri.parse('http://localhost:8000/auth/signup'),
         headers: {'Content-Type': 'application/json'},
@@ -108,33 +107,42 @@ class _SignupScreenState extends State<SignupScreen> {
         }),
       );
 
-      if (signupResponse.statusCode == 200) {
-        // إرسال OTP
-        await http.post(
-          Uri.parse('http://localhost:8000/auth/login'),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({
-            'email': _emailController.text.trim(),
-            'password': _passwordController.text,
-          }),
-        );
+if (signupResponse.statusCode == 200) {
+  final signupData = json.decode(signupResponse.body);
+  final user = signupData['user'];
 
-        if (!mounted) return;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OtpScreen(
-              email: _emailController.text.trim(),
-              onVerified: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SuccessScreen()),
-                );
-              },
+  await http.post(
+    Uri.parse('http://localhost:8000/auth/login'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({
+      'email': _emailController.text.trim(),
+      'password': _passwordController.text,
+    }),
+  );
+
+  if (!mounted) return;
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => OtpScreen(
+        email: _emailController.text.trim(),
+        onVerified: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SuccessScreen(
+                userId: user['user_id'],
+                name: '${user['fname']} ${user['lname']}',
+                email: user['email'],
+              ),
             ),
-          ),
-        );
-      } else {
+          );
+        },
+      ),
+    ),
+  );
+} else {
         final data = json.decode(signupResponse.body);
         setState(() => _emailError = data['detail'] ?? 'Signup failed');
       }

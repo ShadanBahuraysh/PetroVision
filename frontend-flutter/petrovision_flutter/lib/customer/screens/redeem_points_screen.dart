@@ -3,7 +3,12 @@ import 'confirm_redemption_screen.dart';
 import '../../services/loyalty_api_service.dart';
 
 class RedeemPointsScreen extends StatefulWidget {
-  const RedeemPointsScreen({super.key});
+  final String userId;
+
+  const RedeemPointsScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<RedeemPointsScreen> createState() => _RedeemPointsScreenState();
@@ -13,30 +18,39 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
   String selectedCategory = "All";
   int currentPoints = 0;
   bool isLoading = true;
-  final String userId = "U-0003";
+
+  List<Map<String, dynamic>> rewards = [];
 
   final Color primaryNavy = const Color(0xFF1A2E35);
   final Color accentBlue = const Color(0xFF4195AF);
-  final Color scaffoldBg = const Color(0xFFFBFBFB);
 
-  final List<Map<String, dynamic>> rewards = [
-    {"title": "Fuel Voucher", "pts": 2000, "cat": "Fuel", "icon": Icons.local_gas_station},
-    {"title": "Oil Filter", "pts": 450, "cat": "Services", "icon": Icons.build},
-    {"title": "Car Wash", "pts": 600, "cat": "Services", "icon": Icons.local_car_wash},
-    {"title": "Coffee", "pts": 350, "cat": "Coffee", "icon": Icons.coffee},
-  ];
-
-  // ✅ جديد — تجيب النقاط من الـ API
   @override
   void initState() {
     super.initState();
-    _loadPoints();
+    _loadData();
   }
 
-  Future<void> _loadPoints() async {
-    final pts = await LoyaltyApiService.getPoints(userId);
+  int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  Future<void> _loadData() async {
+    final pts = await LoyaltyApiService.getPoints(widget.userId);
+    final offers = await LoyaltyApiService.getAllOffers();
+
+    if (!mounted) return;
+
     setState(() {
       currentPoints = pts;
+      rewards = offers
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((offer) =>
+              (offer["status"] ?? "Active").toString().toLowerCase() ==
+              "active"&&_toInt(offer["redeem_points"]) > 0)
+          .toList();
       isLoading = false;
     });
   }
@@ -45,9 +59,10 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
   Widget build(BuildContext context) {
     final filtered = selectedCategory == "All"
         ? rewards
-        : rewards.where((e) => e["cat"] == selectedCategory).toList();
+        : rewards.where((e) => e["category"] == selectedCategory).toList();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFBFBFB),
       appBar: AppBar(
         title: const Text(
           "REDEEM",
@@ -62,7 +77,11 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
         backgroundColor: const Color(0xFFFBFBFB),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_rounded,
+            color: Color(0xFF1A2E35),
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -72,12 +91,22 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
           _filterChips(),
           const SizedBox(height: 10),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: filtered.length,
-              itemBuilder: (context, i) => _item(context, filtered[i]),
-            ),
-          )
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filtered.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No rewards available",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, i) =>
+                            _item(context, filtered[i]),
+                      ),
+          ),
         ],
       ),
     );
@@ -86,43 +115,51 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
   Widget _pointsCard() {
     return Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Your Points", style: TextStyle(color: Colors.black54, fontSize: 12)),
-          const SizedBox(height: 4),
-          // ✅ جديد — النقاط الحقيقية
-          isLoading
-              ? const CircularProgressIndicator()
-              : Text(
-                  "$currentPoints POINTS",
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-        ],
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Your Points",
+              style: TextStyle(color: Colors.black54, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isLoading ? "..." : "$currentPoints POINTS",
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _filterChips() {
     final categories = ["All", "Fuel", "Services", "Coffee"];
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: categories.map((c) {
           final isSelected = selectedCategory == c;
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: () => setState(() => selectedCategory = c),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? accentBlue.withOpacity(0.15) : Colors.grey.shade100,
+                  color: isSelected
+                      ? accentBlue.withOpacity(0.15)
+                      : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -142,6 +179,12 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
   }
 
   Widget _item(BuildContext context, Map<String, dynamic> item) {
+    final int pointsCost = _toInt(item["redeem_points"]);
+    final bool canRedeem = currentPoints >= pointsCost;
+    final String offerName = item["name"] ?? "Offer";
+    final String category = item["category"] ?? "";
+    final String offerId = item["offer_id"] ?? "";
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -158,41 +201,65 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
               color: accentBlue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(item['icon'], color: accentBlue),
+            child: Icon(Icons.local_offer_rounded, color: accentBlue),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item['title'], style: const TextStyle(fontWeight: FontWeight.w800)),
-                Text("${item['pts']} PTS", style: const TextStyle(color: Colors.grey)),
+                Text(
+                  offerName,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                Text(
+                  "$pointsCost PTS",
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                if (category.isNotEmpty)
+                  Text(
+                    category,
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 11,
+                    ),
+                  ),
               ],
             ),
           ),
           ElevatedButton(
-            onPressed: currentPoints < item['pts']
-                ? null  // ✅ الزر يتعطل لو ما في نقاط كافية
-                : () {
-                    Navigator.push(
+            onPressed: !canRedeem || offerId.isEmpty
+                ? null
+                : () async {
+                    final redeemed = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => ConfirmRedemptionScreen(
-                          rewardType: item['title'],
-                          pointsCost: item['pts'],        // ✅ جديد
-                          currentPoints: currentPoints,   // ✅ جديد
-                          userId: userId,                 // ✅ جديد
+                          rewardType: offerName,
+                          pointsCost: pointsCost,
+                          currentPoints: currentPoints,
+                          userId: widget.userId,
+                          offerId: offerId,
                         ),
                       ),
                     );
+
+                    if (redeemed == true) {
+                      _loadData();
+                    }
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryNavy,
               disabledBackgroundColor: Colors.grey.shade300,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text("Redeem", style: TextStyle(color: Colors.white)),
-          )
+            child: const Text(
+              "Redeem",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
     );

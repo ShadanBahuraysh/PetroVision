@@ -23,17 +23,13 @@ class _FullMapScreenState extends State<FullMapScreen> {
 
   Future<void> _loadStations() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8000/stations-db'),
-      );
+      final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
 
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
 
         setState(() {
-          _stations = data
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList();
+          _stations = data.map((item) => Map<String, dynamic>.from(item)).toList();
           _isLoading = false;
         });
       } else {
@@ -86,11 +82,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Icons.local_gas_station_rounded,
-              color: Color(0xFF4195AF),
-              size: 30,
-            ),
+            const Icon(Icons.local_gas_station_rounded, color: Color(0xFF4195AF), size: 30),
             const SizedBox(height: 12),
             Text(
               name,
@@ -159,11 +151,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.black,
-                    size: 26,
-                  ),
+                  child: const Icon(Icons.arrow_back, color: Colors.black, size: 26),
                 ),
               ),
             ),

@@ -10,11 +10,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  geolocator: ^13.0.1
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  provider: ^6.1.2
+  shared_preferences: ^2.3.2
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8
+  http: ^1.2.2
   mobile_scanner: ^7.2.0
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  flutter_map_cancellable_tile_provider: ^3.0.2
 
 dev_dependencies:
   flutter_test:
@@ -22,7 +30,9 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  generate: true
   uses-material-design: true
 
   assets:
     - assets/images/logo.png
+    - assets/images/AdminPageLogo.png

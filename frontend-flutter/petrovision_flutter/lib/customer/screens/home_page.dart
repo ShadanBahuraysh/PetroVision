@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:r/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'stations_page.dart';
 import 'offers_page.dart';
 import 'manage_profile_screen.dart';
@@ -10,9 +16,20 @@ import 'package:r/auth/welcome_screen.dart';
 import 'about_us_screen.dart';
 import 'terms_conditions_screen.dart';
 import '../../services/loyalty_api_service.dart';
+import '../../core/language_controller.dart';
+import 'confirm_redemption_screen.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String userId;
+  final String name;
+  final String email;
+
+  const HomePage({
+    super.key,
+    required this.userId,
+    required this.name,
+    required this.email,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -21,73 +38,84 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  final Color primaryNavy = const Color(0xFF1A2E35);
-  final Color accentBlue = const Color(0xFF4195AF);
-  final Color scaffoldBg = const Color(0xFFFBFBFB);
+  static const Color _primaryNavy = Color(0xFF1A2E35);
+  static const Color _accentBlue = Color(0xFF4195AF);
+  static const Color _scaffoldBg = Color(0xFFFBFBFB);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final langController = context.watch<LanguageController>();
+
     return Scaffold(
-      backgroundColor: scaffoldBg,
+      backgroundColor: _scaffoldBg,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: scaffoldBg,
+        backgroundColor: _scaffoldBg,
         centerTitle: true,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: Icon(Icons.menu_rounded, color: primaryNavy),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leading: _currentIndex == 0
+            ? Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.menu_rounded, color: _primaryNavy),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                ),
+              )
+            : null,
+        automaticallyImplyLeading: false,
         title: Text(
-          "PETROVISION",
-          style: TextStyle(
-            color: primaryNavy,
+  _currentIndex == 0
+      ? "PETROVISION"
+      : _currentIndex == 1
+          ? "STATIONS"
+          : _currentIndex == 2
+              ? "LOYALTY PROGRAM"
+              : "OFFERS",
+          style: const TextStyle(
+            color: _primaryNavy,
             fontWeight: FontWeight.w900,
             fontSize: 16,
             letterSpacing: 2,
           ),
         ),
       ),
-      drawer: _buildCustomDrawer(),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: const [
-          HomeMainContent(),
-          StationsPage(),
-          LoyaltyDashboardScreen(),
-          OffersPage(),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(),
+      drawer: _buildCustomDrawer(context, l10n, langController),
+      body:  _currentIndex == 0
+    ? HomeMainContent(
+        key: UniqueKey(),
+        userId: widget.userId,
+        name: widget.name,
+      )
+    : _currentIndex == 1
+        ? const StationsPage()
+        : _currentIndex == 2
+            ? LoyaltyDashboardScreen(
+                key: UniqueKey(),
+                userId: widget.userId,
+              )
+            : const OffersPage(),
+
+      bottomNavigationBar: _buildBottomNav(l10n),
       floatingActionButton: FloatingActionButton(
         elevation: 4,
-        backgroundColor: primaryNavy,
+        backgroundColor: _primaryNavy,
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const EarnPointsScreen()),
-        ),
-        child: const Icon(
-          Icons.qr_code_scanner_rounded,
-          color: Colors.white,
-          size: 28,
-        ),
+      MaterialPageRoute(
+  builder: (_) => EarnPointsScreen(
+    userId: widget.userId,
+  ),
+),        ),
+        child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF0F0F0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade400,
-            blurRadius: 8,
-            offset: const Offset(0, -1),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.grey.shade400, blurRadius: 8, offset: const Offset(0, -1))],
       ),
       child: BottomAppBar(
         color: const Color.fromARGB(155, 245, 245, 245),
@@ -100,11 +128,11 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navItem(Icons.grid_view_rounded, "Home", 0),
-              _navItem(Icons.map_outlined, "Stations", 1),
+              _navItem(Icons.grid_view_rounded, l10n.navHome, 0),
+              _navItem(Icons.map_outlined, l10n.navStations, 1),
               const SizedBox(width: 40),
-              _navItem(Icons.stars_rounded, "Points", 2),
-              _navItem(Icons.local_offer_outlined, "Offers", 3),
+              _navItem(Icons.stars_rounded, l10n.navPoints, 2),
+              _navItem(Icons.local_offer_outlined, l10n.navOffers, 3),
             ],
           ),
         ),
@@ -113,98 +141,69 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _navItem(IconData icon, String label, int index) {
-    bool isSelected = _currentIndex == index;
-
+    final bool isSelected = _currentIndex == index;
     return InkWell(
       onTap: () => setState(() => _currentIndex = index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: isSelected ? accentBlue : const Color(0xFFB0B8C1),
-            size: 26,
-          ),
+          Icon(icon, color: isSelected ? _accentBlue : const Color(0xFFB0B8C1), size: 26),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? accentBlue : const Color(0xFFB0B8C1),
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
+          Text(label, style: TextStyle(
+            color: isSelected ? _accentBlue : const Color(0xFFB0B8C1),
+            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          )),
         ],
       ),
     );
   }
 
-  Widget _buildCustomDrawer() {
+  Widget _buildCustomDrawer(BuildContext context, AppLocalizations l10n, LanguageController langController) {
     return Drawer(
       backgroundColor: Colors.white,
       child: Column(
         children: [
           UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: primaryNavy),
-            accountName: const Text(
-              "Raghad 👋",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            accountEmail: const Text("raghad@petrovision.com"),
+            decoration: const BoxDecoration(color: _primaryNavy),
+            accountName: Text("${widget.name} 👋", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            accountEmail: Text(widget.email),
             currentAccountPicture: const CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(
-                Icons.person,
-                color: Color(0xFF1A2E35),
-                size: 35,
-              ),
+              child: Icon(Icons.person, color: _primaryNavy, size: 35),
             ),
           ),
-          _drawerItem(Icons.person_outline, "My Profile", () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ManageProfileScreen()),
-            );
+          _drawerItem(Icons.person_outline, l10n.drawerMyProfile, () {
+            Navigator.push(context, MaterialPageRoute(
+  builder: (_) => ManageProfileScreen(
+    userId: widget.userId,
+    name: widget.name,
+    email: widget.email,
+  ),
+),);
           }),
-          _drawerItem(Icons.receipt_long_outlined, "Transaction History", () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const HistoryPage()),
-            );
+          _drawerItem(Icons.receipt_long_outlined, l10n.drawerTransactionHistory, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) =>  HistoryPage(  userId: widget.userId,
+)));
           }),
-          const Divider(),
-          _drawerItem(Icons.info_outline_rounded, "About Us", () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AboutUsScreen()),
-            );
+          const Divider(height: 1),
+          _buildLanguageToggle(context, l10n, langController),
+          const Divider(height: 1),
+          _drawerItem(Icons.info_outline_rounded, l10n.drawerAboutUs, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutUsScreen()));
           }),
-          _drawerItem(Icons.gavel_rounded, "Terms & Conditions", () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const TermsConditionsScreen()),
-            );
+          _drawerItem(Icons.gavel_rounded, l10n.drawerTermsConditions, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsConditionsScreen()));
           }),
           const Spacer(),
           ListTile(
-            leading: const Icon(
-              Icons.logout_rounded,
-              color: Colors.redAccent,
+            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            title: Text(l10n.drawerLogout, style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            onTap: () => Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+              (route) => false,
             ),
-            title: const Text(
-              "Logout",
-              style: TextStyle(
-                color: Colors.redAccent,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            onTap: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                (route) => false,
-              );
-            },
           ),
           const SizedBox(height: 20),
         ],
@@ -212,24 +211,74 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: primaryNavy.withOpacity(0.7), size: 22),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: primaryNavy,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
+  Widget _buildLanguageToggle(BuildContext context, AppLocalizations l10n, LanguageController langController) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.drawerLanguage, style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w700, letterSpacing: 0.6)),
+          const SizedBox(height: 10),
+          Container(
+            height: 44,
+            decoration: BoxDecoration(color: const Color(0xFFF0F4F6), borderRadius: BorderRadius.circular(14)),
+            child: Row(
+              children: [
+                _langSegment(label: "EN", isSelected: !langController.isArabic,
+                  onTap: () => context.read<LanguageController>().setLocale(const Locale('en'))),
+                _langSegment(label: "AR", isSelected: langController.isArabic,
+                  onTap: () => context.read<LanguageController>().setLocale(const Locale('ar'))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _langSegment({required String label, required bool isSelected, required VoidCallback onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isSelected ? _primaryNavy : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected ? [BoxShadow(color: _primaryNavy.withOpacity(0.18), blurRadius: 6, offset: const Offset(0, 2))] : null,
+          ),
+          child: Center(
+            child: Text(label, style: TextStyle(
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+              fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5,
+            )),
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: _primaryNavy.withOpacity(0.7), size: 22),
+      title: Text(title, style: const TextStyle(color: _primaryNavy, fontWeight: FontWeight.w600, fontSize: 14)),
       onTap: onTap,
     );
   }
 }
 
+// ── Home Main Content ─────────────────────────────────────────────────────────
+
 class HomeMainContent extends StatefulWidget {
-  const HomeMainContent({super.key});
+  final String userId;
+  final String name;
+
+  const HomeMainContent({
+    super.key,
+    required this.userId,
+    required this.name,
+  });
 
   @override
   State<HomeMainContent> createState() => _HomeMainContentState();
@@ -241,36 +290,124 @@ class _HomeMainContentState extends State<HomeMainContent> {
   int _nextTarget = 1000;
   String _nextTier = "Silver";
   bool _isLoading = true;
-
-  final String userId = "U-0003";
+  bool _isMapLoading = true;
+  List<Map<String, dynamic>> _mapStations = [];
+  List<Map<String, dynamic>> _offers = [];
+  bool _isOffersLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _loadMapStations();
+    _loadOffers();
   }
 
-  Future<void> _loadData() async {
-    final points = await LoyaltyApiService.getPoints(userId);
-    final membership = await LoyaltyApiService.getMembership(userId);
+  Future<void> _loadOffers() async {
+  try {
+    final response = await http.get(
+      Uri.parse('http://localhost:8000/offers'),
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+
+      if (!mounted) return;
+
+      setState(() {
+        _offers =
+            data.map((e) => Map<String, dynamic>.from(e)).toList();
+        _isOffersLoading = false;
+      });
+    } else {
+      if (!mounted) return;
+
+      setState(() {
+        _isOffersLoading = false;
+      });
+    }
+  } catch (e) {
+    if (!mounted) return;
 
     setState(() {
-      _points = points;
-      _tier = membership?["tier"] ?? "Bronze";
-      _nextTarget = _tier == "Gold" ? 2000 : 1000;
-      _nextTier = _tier == "Bronze" ? "Silver" : "Gold";
-      _isLoading = false;
+      _isOffersLoading = false;
     });
   }
+}
 
-  void _showBarcodePay(BuildContext context) {
+  Future<void> _loadData() async {
+  int points = 0;
+  Map<String, dynamic>? membership;
+
+  try {
+    points = await LoyaltyApiService.getPoints(widget.userId);
+  } catch (_) {
+    points = 0;
+  }
+
+  try {
+    membership = await LoyaltyApiService.getMembership(widget.userId);
+  } catch (_) {
+    membership = null;
+  }
+
+  if (!mounted) return;
+
+  setState(() {
+    _points = points;
+    _tier = membership?["tier"] ?? "Bronze";
+    _nextTarget = _tier == "Gold" ? 2000 : 1000;
+    _nextTier = _tier == "Bronze" ? "Silver" : "Gold";
+    _isLoading = false;
+  });
+}
+
+
+  Future<void> _loadMapStations() async {
+    try {
+      final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        if (!mounted) return;
+        setState(() {
+          _mapStations = data.map((item) => Map<String, dynamic>.from(item)).toList();
+          _isMapLoading = false;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() => _isMapLoading = false);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isMapLoading = false);
+    }
+  }
+
+  double _toDouble(dynamic value, double fallback) {
+    if (value == null) return fallback;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? fallback;
+  }
+
+  List<Marker> _buildPreviewMarkers() {
+    return _mapStations.take(20).map((station) {
+      final lat = _toDouble(station['lat'], 21.5433);
+      final lng = _toDouble(station['lng'], 39.1728);
+      return Marker(
+        point: LatLng(lat, lng),
+        width: 34, height: 34,
+        child: const Icon(Icons.location_on, color: Color(0xFF4195AF), size: 32),
+      );
+    }).toList();
+  }
+
+  /* void _showBarcodePay(BuildContext context, String redeemCode) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           elevation: 10,
           backgroundColor: Colors.white,
           child: Padding(
@@ -280,79 +417,32 @@ class _HomeMainContentState extends State<HomeMainContent> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4195AF).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.local_offer_rounded,
-                    color: Color(0xFF4195AF),
-                    size: 30,
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFF4195AF).withOpacity(0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.local_offer_rounded, color: Color(0xFF4195AF), size: 30),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Redeem Offer",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF1A2E35),
-                  ),
-                ),
+                Text(l10n.redeemOffer, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1A2E35))),
                 const SizedBox(height: 8),
-                Text(
-                  "Scan this code at the station",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                ),
+                Text(l10n.scanCodeAtStation, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
                 const SizedBox(height: 25),
                 Container(
                   padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
+                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.shade200)),
                   child: Column(
                     children: [
-                      const Icon(
-                        Icons.qr_code_2_rounded,
-                        size: 180,
-                        color: Color(0xFF1A2E35),
-                      ),
+                      const Icon(Icons.qr_code_2_rounded, size: 180, color: Color(0xFF1A2E35)),
                       const SizedBox(height: 10),
-                      Text(
-                        "PV-9928-110",
-                        style: TextStyle(
-                          letterSpacing: 4,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
-                          fontSize: 12,
-                        ),
-                      ),
+                      Text(redeemCode, style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 12)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 25),
                 SizedBox(
-                  width: 140,
-                  height: 50,
+                  width: 140, height: 50,
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A2E35),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      "Close",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A2E35), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
+                    child: Text(l10n.close, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -361,12 +451,13 @@ class _HomeMainContentState extends State<HomeMainContent> {
         );
       },
     );
-  }
+  } */
 
   @override
   Widget build(BuildContext context) {
     const Color primaryNavy = Color(0xFF1A2E35);
     const Color accentBlue = Color(0xFF4195AF);
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -377,130 +468,66 @@ class _HomeMainContentState extends State<HomeMainContent> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Hello, Raghad",
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w800,
-                      color: primaryNavy,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    "Ready for a refill?",
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
+                  Text(l10n.helloUser(widget.name), style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w800, color: primaryNavy, letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
+                  Text(l10n.readyForRefill, style: const TextStyle(color: Colors.grey, fontSize: 14)),
                 ],
               ),
-              _buildPointsCard(),
+              _buildPointsCard(l10n),
             ],
           ),
           const SizedBox(height: 35),
-          _buildMembershipCard(),
+          _buildMembershipCard(l10n),
           const SizedBox(height: 40),
-          const Text(
-            "Nearby Stations",
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: primaryNavy,
-            ),
-          ),
+          Text(l10n.nearbyStations, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: primaryNavy)),
           const SizedBox(height: 16),
-          _buildMapCard(context),
+          _buildMapCard(context, l10n),
           const SizedBox(height: 35),
-          const Text(
-            "Special Offers",
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: primaryNavy,
-            ),
-          ),
+          Text(l10n.specialOffers, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: primaryNavy)),
           const SizedBox(height: 12),
-          _buildOfferItem(context, accentBlue),
+          _buildOfferItem(context, accentBlue, l10n),
           const SizedBox(height: 120),
         ],
       ),
     );
   }
 
-  Widget _buildPointsCard() {
+  Widget _buildPointsCard(AppLocalizations l10n) {
     const Color accentBlue = Color(0xFF4195AF);
-
     return Column(
       children: [
-        Text(
-          _isLoading ? "..." : "$_points",
-          style: const TextStyle(
-            color: accentBlue,
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-          ),
-        ),
-        const Text(
-          "POINTS",
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
+        Text(_isLoading ? "..." : "$_points", style: const TextStyle(color: accentBlue, fontWeight: FontWeight.w900, fontSize: 22)),
+        Text(l10n.points, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1)),
       ],
     );
   }
 
-  Widget _buildMembershipCard() {
+  Widget _buildMembershipCard(AppLocalizations l10n) {
     const Color accentBlue = Color(0xFF4195AF);
-    double progress = (_points / _nextTarget).clamp(0.0, 1.0);
-
+    final double progress = (_points / _nextTarget).clamp(0.0, 1.0);
     return SizedBox(
       width: 300,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "${_tier.toUpperCase()} STATUS",
-            style: const TextStyle(
-              color: Colors.black54,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
-          ),
+          Text(l10n.tierStatus(_tier.toUpperCase()), style: const TextStyle(color: Colors.black54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
           const SizedBox(height: 6),
-          Text(
-            "$_points / $_nextTarget",
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          Text(
-            "Points to $_nextTier Tier",
-            style: const TextStyle(color: Colors.black45, fontSize: 14),
-          ),
+          Text("$_points / $_nextTarget", style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(l10n.pointsToNextTier(_nextTier), style: const TextStyle(color: Colors.black45, fontSize: 14)),
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.grey.shade200,
-              color: accentBlue,
-              minHeight: 8,
-            ),
+            child: LinearProgressIndicator(value: progress, backgroundColor: Colors.grey.shade200, color: accentBlue, minHeight: 8),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMapCard(BuildContext context) {
+  Widget _buildMapCard(BuildContext context, AppLocalizations l10n) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: SizedBox(
@@ -508,49 +535,51 @@ class _HomeMainContentState extends State<HomeMainContent> {
         width: double.infinity,
         child: Stack(
           children: [
-            Container(
-              color: const Color(0xFFEAF3F7),
-              child: const Center(
-                child: Icon(
-                  Icons.map_rounded,
-                  size: 70,
-                  color: Color(0xFF4195AF),
+            FlutterMap(
+              options: const MapOptions(
+                initialCenter: LatLng(21.5433, 39.1728),
+                initialZoom: 5.0,
+                interactionOptions: InteractionOptions(
+                  flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.scrollWheelZoom,
                 ),
               ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.petrovision.app',
+                ),
+                MarkerLayer(markers: _buildPreviewMarkers()),
+              ],
             ),
+            if (_isMapLoading)
+              Container(
+                color: Colors.white.withOpacity(0.45),
+                child: const Center(child: CircularProgressIndicator(color: Color(0xFF4195AF))),
+              ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withOpacity(0.25),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.18), Colors.transparent],
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                 ),
               ),
             ),
             Positioned(
-              bottom: 12,
-              right: 12,
+              top: 14, left: 14,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.92), borderRadius: BorderRadius.circular(14)),
+                child: Text('${_mapStations.length} Stations', style: const TextStyle(color: Color(0xFF1A2E35), fontWeight: FontWeight.w800, fontSize: 12)),
+              ),
+            ),
+            Positioned(
+              bottom: 12, right: 12,
               child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FullMapScreen()),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FullMapScreen())),
                 icon: const Icon(Icons.map_rounded, size: 16),
-                label: const Text(
-                  "Explore",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                ),
+                label: Text(l10n.explore, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
               ),
             ),
           ],
@@ -559,68 +588,134 @@ class _HomeMainContentState extends State<HomeMainContent> {
     );
   }
 
-  Widget _buildOfferItem(BuildContext context, Color accent) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+  Widget _buildOfferItem(
+  BuildContext context,
+  Color accent,
+  AppLocalizations l10n,
+) {
+  if (_isOffersLoading) {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  if (_offers.isEmpty) {
+    return const Text("No offers available");
+  }
+
+final offer = _offers.first;
+
+final int redeemPoints =
+    ((offer["redeem_points"] ?? 0) as num).toInt();
+
+final bool canRedeem = _points >= redeemPoints;
+
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(
+        color: Colors.grey.shade200,
+        width: 1.2,
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: accent.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.local_gas_station_rounded, color: accent),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.02),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: accent.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Double Points Weekend",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                ),
-                Text(
-                  "On all fuel types",
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
+          child: Icon(
+            Icons.local_gas_station_rounded,
+            color: accent,
           ),
-          InkWell(
-            onTap: () => _showBarcodePay(context),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+        ),
+
+        const SizedBox(width: 16),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                offer["name"] ?? "Offer",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
               ),
-              child: Text(
-                "Claim",
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.bold,
+
+              Text(
+                offer["offer_type"] ?? "",
+                style: const TextStyle(
+                  color: Colors.grey,
                   fontSize: 12,
                 ),
               ),
+            ],
+          ),
+        ),
+
+
+
+InkWell(
+  onTap: !canRedeem
+      ? null
+      : () async {
+          final redeemed = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ConfirmRedemptionScreen(
+                rewardType: offer["name"] ?? "Offer",
+                pointsCost: redeemPoints,
+                currentPoints: _points,
+                userId: widget.userId,
+                offerId: offer["offer_id"],
+              ),
+            ),
+          );
+
+          if (redeemed == true) {
+            _loadData();
+          }
+        },
+
+          borderRadius: BorderRadius.circular(12),
+
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+
+            child: Text(
+              l10n.claim,
+              style: TextStyle(
+                color: accent,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 }

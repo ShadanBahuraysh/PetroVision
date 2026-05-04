@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'loyalty_dashboard_screen.dart';
 
 class RedemptionSuccessScreen extends StatelessWidget {
-  const RedemptionSuccessScreen({super.key});
+  final String userId;
+
+  const RedemptionSuccessScreen({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +44,7 @@ class RedemptionSuccessScreen extends StatelessWidget {
                 height: 55,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (_) => const LoyaltyDashboardScreen(),
-                      ),
-                      (route) => false,
-                    );
+                    Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryNavy,
@@ -57,7 +54,10 @@ class RedemptionSuccessScreen extends StatelessWidget {
                   ),
                   child: const Text(
                     "Back to Loyalty",
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),

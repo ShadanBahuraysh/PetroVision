@@ -1,0 +1,142 @@
+{
+  "@@locale": "en",
+
+  "navHome": "HOME",
+  "navStations": "STATIONS",
+  "navPoints": "LOYALTY PROGRAM",
+  "navOffers": "OFFERS",
+
+  "stationsTitle": "STATIONS",
+  "noStationsFound": "No stations found",
+  "specialOffersAtStation": "Special offers at this station:",
+  "workingHours": "Working Hours",
+  "contactNumber": "Contact Number",
+  "featured": "Featured",
+
+  "drawerMyProfile": "My Profile",
+  "drawerTransactionHistory": "Transaction History",
+  "drawerAboutUs": "About Us",
+  "drawerTermsConditions": "Terms & Conditions",
+  "drawerLogout": "Logout",
+  "drawerLanguage": "Language",
+
+  "helloUser": "Hello, {name}",
+  "@helloUser": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "readyForRefill": "Ready for a refill?",
+  "points": "POINTS",
+
+  "tierStatus": "{tier} STATUS",
+  "@tierStatus": {
+    "placeholders": {
+      "tier": { "type": "String" }
+    }
+  },
+
+  "pointsToNextTier": "Points to {tier} Tier",
+  "@pointsToNextTier": {
+    "placeholders": {
+      "tier": { "type": "String" }
+    }
+  },
+
+  "nearbyStations": "Nearby Stations",
+  "specialOffers": "Special Offers",
+  "explore": "Explore",
+  "doublePointsWeekend": "Double Points Weekend",
+  "onAllFuelTypes": "On all fuel types",
+  "claim": "Claim",
+  "redeemOffer": "Redeem Offer",
+  "scanCodeAtStation": "Scan this code at the station",
+  "close": "Close",
+
+  "transactionHistoryTitle": "TRANSACTION HISTORY",
+  "noTransactionsYet": "No transactions yet",
+
+  "offersTitle": "OFFERS",
+  "noOffersAvailable": "No offers available",
+  "earnRedeemPoints": "Earn {earn} pts • Redeem {redeem} pts",
+  "@earnRedeemPoints": {
+    "placeholders": {
+      "earn": { "type": "int" },
+      "redeem": { "type": "int" }
+    }
+  },
+
+  "myProfile": "My Profile",
+  "personalInformation": "Personal Information",
+  "fullNameLabel": "Full Name",
+  "emailLabel": "Email",
+  "phoneLabel": "Phone",
+  "cityLabel": "City",
+  "accountSection": "Account",
+  "editProfile": "Edit Profile",
+  "updatePersonalInfo": "Update your personal information",
+  "changePassword": "Change Password",
+  "updateSecurityCredentials": "Update your security credentials",
+  "logout": "Logout",
+  "saveChanges": "Save Changes",
+  "phoneNumber": "Phone Number",
+  "currentPassword": "Current Password",
+  "newPassword": "New Password",
+  "confirmPassword": "Confirm Password",
+  "updatePassword": "Update Password",
+
+  "loyaltyProgramTitle": "LOYALTY PROGRAM",
+  "yourPoints": "Your Points",
+  "actions": "Actions",
+  "earn": "Earn",
+  "redeem": "Redeem",
+
+  "aboutUsTitle": "ABOUT US",
+  "ourVision": "Our Vision",
+  "ourMission": "Our Mission",
+  "funFacts": "FUN FACTS & ACHIEVEMENTS",
+  "contactUs": "CONTACT US",
+
+  "termsConditionsTitle": "TERMS & CONDITIONS",
+
+  "aboutUsHeroText": "PetroVision is your smart companion at PetroMin stations. Check out the latest offers, earn points every time you fuel up, and redeem rewards instantly at the station or with our partners. It's designed to make every visit faster, more fun, and more rewarding.",
+  "ourVisionDesc": "To transform the way customers experience fuel stations by combining convenience, rewards, and innovation.",
+  "ourMissionDesc": "To provide a seamless, fun, and rewarding experience for every customer while strengthening the bond between PetroMin and its community.",
+  "achievement1": "Over 50,000 satisfied users in 2024",
+  "achievement2": "Redeemed more than 1 million reward points",
+  "achievement3": "Operates in 20+ stations across the kingdom",
+  "achievement4": "Introduced AI-driven insights for personalized offers",
+  "contactLocation": "Jeddah, Saudi Arabia",
+
+  "termsWelcome": "Welcome to PetroVision",
+  "termsIntro": "Effective Date: April 2026\nBy using our app, you agree to these Terms and Conditions. Please read them carefully.",
+  "termsSec1Title": "1. Use of the App",
+  "termsSec1P1": "PetroVision is intended for personal, non-commercial use.",
+  "termsSec1P2": "You must be at least 18 years old to use the app.",
+  "termsSec1P3": "You are responsible for maintaining the confidentiality of your account and password.",
+  "termsSec2Title": "2. Loyalty Points and Rewards",
+  "termsSec2P1": "Points are earned based on transactions at PetroMin stations and participating partners.",
+  "termsSec2P2": "Points have no cash value and cannot be exchanged for money.",
+  "termsSec2P3": "Rewards must be redeemed through the app and are subject to availability.",
+  "termsSec2P4": "PetroVision reserves the right to modify or cancel rewards at any time.",
+  "termsSec3Title": "3. Offers and Promotions",
+  "termsSec3P1": "All offers and promotions are subject to terms set by PetroMin stations or their partners.",
+  "termsSec3P2": "PetroVision is not responsible for errors, inaccuracies, or expiration of offers.",
+  "termsSec4Title": "4. User Content",
+  "termsSec4P1": "Any content you submit (reviews, feedback, or suggestions) may be used by PetroVision to improve services.",
+  "termsSec4P2": "You grant PetroVision a non-exclusive, royalty-free license to use your content.",
+  "termsSec5Title": "5. Privacy",
+  "termsSec5P1": "Your use of the app is also governed by our Privacy Policy, which explains how we collect, use, and protect your information.",
+  "termsSec6Title": "6. Limitation of Liability",
+  "termsSec6P1": "PetroVision is provided \"as is\" without warranties of any kind.",
+  "termsSec6P2": "We are not liable for any damages resulting from your use of the app or inability to access it.",
+  "termsSec7Title": "7. Termination",
+  "termsSec7P1": "We may suspend or terminate your access if you violate these Terms and Conditions.",
+  "termsSec7P2": "Upon termination, your account and points may be deactivated.",
+  "termsSec8Title": "8. Changes to Terms",
+  "termsSec8P1": "PetroVision may update these Terms and Conditions at any time.",
+  "termsSec8P2": "Continued use of the app after changes constitutes acceptance of the updated terms.",
+  "termsSec9Title": "9. Governing Law",
+  "termsSec9P1": "These Terms are governed by the laws of the country where PetroMin operates."
+}

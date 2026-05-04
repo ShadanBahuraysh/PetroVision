@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:r/l10n/app_localizations.dart';
 import '../../services/loyalty_api_service.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  final String userId;
+
+  const HistoryPage({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -15,7 +21,6 @@ class _HistoryPageState extends State<HistoryPage> {
   List<dynamic> transactions = [];
   bool isLoading = true;
 
-  final String userId = "U-0003";
 
   @override
   void initState() {
@@ -24,7 +29,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _loadTransactions() async {
-    final data = await LoyaltyApiService.getTransactions(userId);
+    final data = await LoyaltyApiService.getTransactions(widget.userId);
     setState(() {
       transactions = data;
       isLoading = false;
@@ -43,39 +48,45 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFB),
-     appBar: AppBar(
-  title: const Text(
-    "TRANSACTION HISTORY",
-    style: TextStyle(
-      color: Color(0xFF1A2E35),
-      fontWeight: FontWeight.w900,
-      fontSize: 16,
-      letterSpacing: 2,
-    ),
-  ),
-  centerTitle: true,
-  backgroundColor: const Color(0xFFFBFBFB),
-  elevation: 0,
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF1A2E35), size: 20),
-    onPressed: () => Navigator.pop(context),
-  ),
-),
+      appBar: AppBar(
+        title: Text(
+          l10n.transactionHistoryTitle,
+          style: const TextStyle(
+            color: Color(0xFF1A2E35),
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            letterSpacing: 2,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFFBFBFB),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded,
+              color: Color(0xFF1A2E35), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : transactions.isEmpty
-              ? const Center(child: Text("No transactions yet"))
+              ? Center(child: Text(l10n.noTransactionsYet))
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 10),
                   itemCount: transactions.length,
                   itemBuilder: (context, index) {
                     final item = transactions[index];
-                    final String type = item["type"] ?? "fuel";
+                    final String type = item["type"] ?? "earn";
+                    final bool isRedeem = type.toLowerCase() == "redeem";
                     final Color themeColor = accentBlue;
                     final int points = item["points"] ?? 0;
-                    final double amount = (item["amount"] ?? 0).toDouble();
+                    final double amount =
+                        (item["amount"] ?? 0).toDouble();
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -101,7 +112,12 @@ class _HistoryPageState extends State<HistoryPage> {
                               color: themeColor.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(Icons.add_circle_outline_rounded, color: themeColor, size: 20),
+                            child: Icon(
+                                isRedeem
+                                  ? Icons.remove_circle_outline_rounded
+                                  : Icons.add_circle_outline_rounded,
+                                color: themeColor,
+                                size: 20,)
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -110,17 +126,25 @@ class _HistoryPageState extends State<HistoryPage> {
                               children: [
                                 Text(
                                   item["transaction_id"] ?? "",
-                                  style: TextStyle(fontWeight: FontWeight.w900, color: primaryNavy, fontSize: 14),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      color: primaryNavy,
+                                      fontSize: 14),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   type.toUpperCase(),
-                                  style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   _formatDate(item["date"]),
-                                  style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
+                                  style: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 10),
                                 ),
                               ],
                             ),
@@ -130,11 +154,17 @@ class _HistoryPageState extends State<HistoryPage> {
                             children: [
                               Text(
                                 "+$points PTS",
-                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: themeColor),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                    color: themeColor),
                               ),
                               Text(
-                                "${amount.toStringAsFixed(2)} SAR",
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade400),
+                                 "${isRedeem ? '-' : '+'}$points PTS",
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade400),
                               ),
                             ],
                           ),

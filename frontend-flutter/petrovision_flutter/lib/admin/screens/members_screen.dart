@@ -75,6 +75,7 @@ class _MembersScreenState extends State<MembersScreen> {
       selectedIndex: 2,
       title: 'Members',
       subtitle: 'Track member activity, tiers, and recent engagement.',
+      showExportButton: false,
       child: _loading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF132935)))
           : _error != null

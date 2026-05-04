@@ -5,6 +5,7 @@ import 'otp_screen.dart';
 import 'success_screen.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
+import 'admin_job_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _passwordVisible = false;
   String? _errorMessage;
 
   @override
@@ -59,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final role = data['user']?['role'] ?? 'customer';
+        final userId = data['user']?['user_id'] ?? '';
 
         Navigator.push(
           context,
@@ -67,11 +70,20 @@ class _LoginScreenState extends State<LoginScreen> {
               email: email,
               onVerified: () {
                 if (role == 'admin') {
-                  Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+                  Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AdminJobVerificationScreen(userId: userId),
+                  ),
+                );
                 } else {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const SuccessScreen()),
+                    MaterialPageRoute(builder: (_) => SuccessScreen(
+  userId: data['user']['user_id'],
+  name: '${data['user']['fname']} ${data['user']['lname']}',
+  email: data['user']['email'],
+)),
                   );
                 }
               },
@@ -85,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       setState(() => _errorMessage = 'Connection error. Try again.');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -141,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 10),
               TextField(
                 controller: passwordController,
-                obscureText: true,
+                obscureText: !_passwordVisible,
                 style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w600),
                 decoration: _buildInputDecoration("Enter your password", Icons.lock_outline, isPassword: true),
               ),
@@ -223,7 +235,22 @@ class _LoginScreenState extends State<LoginScreen> {
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.normal),
       prefixIcon: Icon(icon, size: 20, color: accentBlue),
-      suffixIcon: isPassword ? Icon(Icons.visibility_off_outlined, size: 20, color: Colors.grey.shade400) : null,
+      suffixIcon: isPassword
+          ? IconButton(
+              icon: Icon(
+                _passwordVisible
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                size: 20,
+                color: Colors.grey.shade400,
+              ),
+              onPressed: () {
+                setState(() {
+                  _passwordVisible = !_passwordVisible;
+                });
+              },
+            )
+          : null,
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),

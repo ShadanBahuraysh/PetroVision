@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../services/loyalty_api_service.dart';
+import 'redemption_success_screen.dart';
 
 class ConfirmRedemptionScreen extends StatefulWidget {
   final String rewardType;
   final int pointsCost;
   final int currentPoints;
   final String userId;
+  final String offerId;
 
   const ConfirmRedemptionScreen({
     super.key,
@@ -13,10 +15,12 @@ class ConfirmRedemptionScreen extends StatefulWidget {
     required this.pointsCost,
     required this.currentPoints,
     required this.userId,
+    required this.offerId
   });
 
   @override
-  State<ConfirmRedemptionScreen> createState() => _ConfirmRedemptionScreenState();
+  State<ConfirmRedemptionScreen> createState() =>
+      _ConfirmRedemptionScreenState();
 }
 
 class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
@@ -28,6 +32,7 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
     final result = await LoyaltyApiService.redeemPoints(
       userId: widget.userId,
       points: widget.pointsCost,
+      offerId: widget.offerId,
     );
 
     setState(() => _isLoading = false);
@@ -35,7 +40,7 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
     if (!mounted) return;
 
     if (result != null) {
-      _showBarcode(context);
+      _showBarcode(context, result["redeem_qr_code"] ?? "NO CODE");
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -46,12 +51,14 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
     }
   }
 
-  void _showBarcode(BuildContext context) {
+  void _showBarcode(BuildContext context, String redeemCode) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
           elevation: 10,
           backgroundColor: Colors.white,
           child: Padding(
@@ -65,15 +72,21 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
                     color: const Color(0xFF4195AF).withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.local_offer_rounded,
-                      color: Color(0xFF4195AF), size: 30),
+                  child: const Icon(
+                    Icons.local_offer_rounded,
+                    color: Color(0xFF4195AF),
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                const Text("Redeem Offer",
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF1A2E35))),
+                const Text(
+                  "Redeem Offer",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF1A2E35),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   "Scan this code at the station",
@@ -88,18 +101,24 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
-                  child: const Column(
+                  child:  Column(
                     children: [
-                      Icon(Icons.qr_code_2_rounded,
-                          size: 180, color: Color(0xFF1A2E35)),
-                      SizedBox(height: 10),
-                      Text("PV-9928-110",
-                          style: TextStyle(
-                              letterSpacing: 4,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 12)),
-                    ],
+  const Icon(
+    Icons.qr_code_2_rounded,
+    size: 180,
+    color: Color(0xFF1A2E35),
+  ),
+  const SizedBox(height: 10),
+  Text(
+    redeemCode,
+    style: const TextStyle(
+      letterSpacing: 4,
+      fontWeight: FontWeight.bold,
+      color: Colors.grey,
+      fontSize: 12,
+    ),
+  ),
+],
                   ),
                 ),
                 const SizedBox(height: 25),
@@ -107,21 +126,31 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
                   width: 140,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A2E35),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
+  onPressed: () {
+    Navigator.pop(context);
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => RedemptionSuccessScreen(
+        userId: widget.userId,
+      ),
+    ),
+  );
+},
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFF1A2E35),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    elevation: 0,
                     ),
-                    child: const Text("Close",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      "Close",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -153,8 +182,11 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
         backgroundColor: const Color(0xFFFBFBFB),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded,
-              color: Color(0xFF1A2E35), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_rounded,
+            color: Color(0xFF1A2E35),
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -164,20 +196,28 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("You are redeeming:",
-                  style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w600)),
+              Text(
+                "You are redeeming:",
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text(widget.rewardType,
-                  style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF1A2E35))),
+              Text(
+                widget.rewardType,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1A2E35),
+                ),
+              ),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 15),
+                  horizontal: 20,
+                  vertical: 15,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
@@ -185,12 +225,9 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
                 ),
                 child: Column(
                   children: [
-                    // ✅ النقاط الحقيقية
-                    _buildPointRow(
-                        "Points required", "${widget.pointsCost}"),
+                    _buildPointRow("Points required", "${widget.pointsCost}"),
                     const Divider(height: 20),
-                    _buildPointRow(
-                        "Remaining points", "$remainingPoints"),
+                    _buildPointRow("Remaining points", "$remainingPoints"),
                   ],
                 ),
               ),
@@ -200,21 +237,24 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
                 height: 55,
                 child: ElevatedButton(
                   // ✅ يتصل بالـ API أولاً
-                  onPressed:
-                      _isLoading ? null : () => _confirmRedeem(context),
+                  onPressed: _isLoading ? null : () => _confirmRedeem(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A2E35),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     elevation: 0,
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Show Barcode",
+                      : const Text(
+                          "Show Barcode",
                           style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16)),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -228,14 +268,21 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: Colors.black54, fontWeight: FontWeight.w600)),
-        Text(value,
-            style: const TextStyle(
-                color: Color(0xFF1A2E35),
-                fontWeight: FontWeight.w900,
-                fontSize: 16)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.black54,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFF1A2E35),
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+          ),
+        ),
       ],
     );
   }

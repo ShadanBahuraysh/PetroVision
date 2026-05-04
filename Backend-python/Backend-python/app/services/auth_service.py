@@ -2,6 +2,7 @@ import os
 import random
 import time
 import smtplib
+import bcrypt
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -16,11 +17,12 @@ class AuthService:
         self.otp_store = {}
 
     def authenticate(self, email, password):
+        email = email.strip().lower()
+
         result = (
             supabase.table("users")
             .select("*")
-            .eq("email", email.strip().lower())
-            .eq("password", password.strip())
+            .eq("email", email)
             .execute()
         )
 
@@ -28,6 +30,11 @@ class AuthService:
             return None
 
         user = result.data[0]
+        stored_password = user.get("password", "")
+
+        if not self._check_password(password.strip(), stored_password):
+            return None
+
         user.pop("password", None)
 
         return self._attach_user_role_data(user)
@@ -64,6 +71,8 @@ PetroVision Team
         server.quit()
 
     def generate_otp(self, email):
+        email = email.strip().lower()
+
         code = str(random.randint(100000, 999999))
         expiry = time.time() + 300
 
@@ -84,7 +93,11 @@ PetroVision Team
             "email": email
         }
 
+
     def verify_otp(self, email, code):
+        email = email.strip().lower()
+        code = str(code).strip()
+
         record = self.otp_store.get(email)
 
         if not record:
@@ -94,7 +107,7 @@ PetroVision Team
             self.otp_store.pop(email, None)
             return False
 
-        if record["code"] != code:
+        if str(record["code"]).strip() != code:
             return False
 
         self.otp_store.pop(email, None)
@@ -160,9 +173,10 @@ PetroVision Team
         if record["code"] != code:
             return False
 
+        hashed_password = self._hash_password(new_password)
         result = (
             supabase.table("users")
-            .update({"password": new_password})
+            .update({"password": hashed_password})
             .eq("email", email)
             .execute()
         )
@@ -197,6 +211,7 @@ PetroVision Team
             return None
 
         new_user_id = self._generate_user_id()
+        hashed_password = self._hash_password(password)
 
         user_result = (
             supabase.table("users")
@@ -206,7 +221,7 @@ PetroVision Team
                 "lname": lname,
                 "phone": phone,
                 "email": email,
-                "password": password
+                "password": hashed_password
             })
             .execute()
         )
@@ -240,7 +255,22 @@ PetroVision Team
                 })
                 .execute()
             )
+            account_id = f"LA-{user['user_id']}"
+            membership_id = f"MEM-{user['user_id']}"
 
+            supabase.table("loyalty_account").insert({
+                "account_id": account_id,
+                "user_id": user["user_id"],
+                "current_points": 0
+            }).execute()
+
+            supabase.table("membership").insert({
+                "membership_id": membership_id,
+                "user_id": user["user_id"],
+                "account_id": account_id,
+                "tier": "Bronze",
+                "status": "active"
+            }).execute()
             user["role"] = "customer"
             user["customer"] = customer_result.data[0] if customer_result.data else None
 
@@ -304,3 +334,20 @@ PetroVision Team
                     continue
 
         return f"U-{max_number + 1:04d}"
+    
+
+    def _hash_password(self, password):
+            password_bytes = password.encode("utf-8")
+            salt = bcrypt.gensalt()
+            hashed = bcrypt.hashpw(password_bytes, salt)
+            return hashed.decode("utf-8")
+
+
+    def _check_password(self, plain_password, hashed_password):
+            try:
+                return bcrypt.checkpw(
+                    plain_password.encode("utf-8"),
+                    hashed_password.encode("utf-8")
+                )
+            except Exception:
+                return False

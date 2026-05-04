@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:r/l10n/app_localizations.dart';
 import '../../services/loyalty_api_service.dart';
-
+import 'offer_details_screen.dart';
 class OffersPage extends StatefulWidget {
   const OffersPage({super.key});
 
@@ -23,91 +24,92 @@ class _OffersPageState extends State<OffersPage> {
   }
 
   Future<void> _loadOffers() async {
-    final data = await LoyaltyApiService.getAllOffers();
-    setState(() {
-      offers = data;
-      isLoading = false;
+  final data = await LoyaltyApiService.getAllOffers();
+  setState(() {
+    offers = data.where((offer) {
+  return (offer["status"] ?? "Active").toString().toLowerCase() == "active";
+}).toList();
+    offers.sort((a, b) {
+      final aPoints = ((a["earn_points"] ?? 0) as num).toInt();
+      final bPoints = ((b["earn_points"] ?? 0) as num).toInt();
+      return bPoints.compareTo(aPoints);
     });
-  }
+    isLoading = false;
+  });
+}
 
   IconData _getIcon(String offerType) {
     switch (offerType) {
-      case "Fuel Cashback": return Icons.local_gas_station_rounded;
-      case "Coffee Combo": return Icons.coffee_rounded;
-      case "Free Car Wash": return Icons.local_car_wash_rounded;
-      case "Weekend Bonus": return Icons.stars_rounded;
-      default: return Icons.card_giftcard_rounded;
+      case "Fuel Cashback":
+        return Icons.local_gas_station_rounded;
+      case "Coffee Combo":
+        return Icons.coffee_rounded;
+      case "Free Car Wash":
+        return Icons.local_car_wash_rounded;
+      case "Weekend Bonus":
+        return Icons.stars_rounded;
+      default:
+        return Icons.card_giftcard_rounded;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text(
-          "OFFERS",
-          style: TextStyle(
-            color: primaryNavy,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-            letterSpacing: 2,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: scaffoldBg,
-        elevation: 0,
-      ),
+      
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: accentBlue))
+          ? const Center(
+              child: CircularProgressIndicator(color: accentBlue))
           : offers.isEmpty
-              ? const Center(child: Text("No offers available"))
+              ? Center(child: Text(l10n.noOffersAvailable))
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 10),
                   itemCount: offers.length,
                   itemBuilder: (context, index) {
                     final offer = offers[index];
-                    final offerType = offer["offer_type"] ?? "";
+                    final offerType = offer["name"] ?? offer["offer_type"] ?? "Offer";
+                    final earnPts =
+                        ((offer["earn_points"] ?? 0) as num).toInt();
+                    final redeemPts =
+                        ((offer["redeem_points"] ?? 0) as num).toInt();
 
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.grey.shade200, width: 1),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Row(
+                       padding: const EdgeInsets.only(bottom: 16),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(24),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OfferDetailsScreen(
+            offer: offer,
+          ),
+        ),
+      );
+    },
+    child: Row(
                           children: [
-                            // أيقونة
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: accentBlue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: Icon(_getIcon(offerType), color: accentBlue, size: 24),
+                              child: Icon(_getIcon(offerType),
+                                  color: accentBlue, size: 24),
                             ),
-
                             const SizedBox(width: 16),
-
-                            // النص
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Tag
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
                                       color: accentBlue.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(8),
@@ -121,9 +123,7 @@ class _OffersPageState extends State<OffersPage> {
                                       ),
                                     ),
                                   ),
-
                                   const SizedBox(height: 6),
-
                                   Text(
                                     offerType,
                                     style: const TextStyle(
@@ -132,11 +132,9 @@ class _OffersPageState extends State<OffersPage> {
                                       color: primaryNavy,
                                     ),
                                   ),
-
                                   const SizedBox(height: 4),
-
                                   Text(
-                                    "Earn ${offer["earn_points"]} pts • Redeem ${offer["redeem_points"]} pts",
+                                    l10n.earnRedeemPoints(earnPts, redeemPts),
                                     style: TextStyle(
                                       color: Colors.grey.shade500,
                                       fontSize: 12,
@@ -145,8 +143,8 @@ class _OffersPageState extends State<OffersPage> {
                                 ],
                               ),
                             ),
-
-                            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey.shade300),
+                            Icon(Icons.arrow_forward_ios_rounded,
+                                size: 14, color: Colors.grey.shade300),
                           ],
                         ),
                       ),

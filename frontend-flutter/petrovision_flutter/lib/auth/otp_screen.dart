@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 class OtpScreen extends StatefulWidget {
   final String email;
@@ -27,8 +29,7 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<FocusNode> _focusNodes =
       List.generate(6, (_) => FocusNode());
 
-  // Simulated correct OTP (in production this comes from your backend)
-  final String _correctOtp = '123456';
+  static const String _baseUrl = 'http://localhost:8000';
 
   bool _hasError    = false;
   bool _isVerifying = false;
@@ -94,43 +95,80 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Future<void> _verify() async {
     if (_isVerifying) return;
-    setState(() { _isVerifying = true; _hasError = false; });
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
+    setState(() {
+      _isVerifying = true;
+      _hasError = false;
+    });
 
-    if (!mounted) return;
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/verify-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'email': widget.email.trim(),
+          'code': _enteredOtp.trim(),
+        }),
+      );
 
-    if (_enteredOtp == _correctOtp) {
-      setState(() => _isVerifying = false);
-      widget.onVerified();
-    } else {
-      setState(() { _isVerifying = false; _hasError = true; });
-      // Shake + clear
-      for (final c in _controllers) c.clear();
-      _focusNodes[0].requestFocus();
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        setState(() => _isVerifying = false);
+        widget.onVerified();
+      } else {
+        _clearOtpWithError();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _clearOtpWithError();
     }
-    
+  }
+
+  void _clearOtpWithError() {
+    setState(() {
+      _isVerifying = false;
+      _hasError = true;
+    });
+
+    for (final c in _controllers) c.clear();
+    _focusNodes[0].requestFocus();
   }
 
   Future<void> _resend() async {
-    if (_secondsLeft > 0 || _isResending) return;
-    setState(() => _isResending = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _isResending = false);
-    _startTimer();
-    for (final c in _controllers) c.clear();
-    _focusNodes[0].requestFocus();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('A new code was sent to ${widget.email}'),
-        backgroundColor: primaryNavy,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  if (_secondsLeft > 0 || _isResending) return;
+
+  setState(() => _isResending = true);
+
+  await http.post(
+    Uri.parse('$_baseUrl/auth/resend-otp'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({
+      'email': widget.email.trim(),
+    }),
+  );
+
+  if (!mounted) return;
+
+  setState(() => _isResending = false);
+
+  _startTimer();
+
+  for (final c in _controllers) c.clear();
+
+  _focusNodes[0].requestFocus();
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('A new code was sent to ${widget.email}'),
+      backgroundColor: primaryNavy,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Mask email: j***@gmail.com
   String get _maskedEmail {
@@ -326,7 +364,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'For your security, this code expires in 10 minutes and can only be used once.',
+                        'For your security, this code expires in 5 minutes and can only be used once.',
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.5),
                       ),
                     ),

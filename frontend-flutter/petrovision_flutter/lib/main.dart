@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:r/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'admin/screens/dashboard_screen.dart';
 import 'admin/screens/loyalty_programs_screen.dart';
@@ -7,9 +10,15 @@ import 'admin/screens/settings_screen.dart';
 import 'auth/welcome_screen.dart';
 import 'auth/login_screen.dart';
 import 'customer/screens/home_page.dart';
+import 'core/language_controller.dart';
 
 void main() {
-  runApp(const PetroVisionApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => LanguageController(),
+      child: const PetroVisionApp(),
+    ),
+  );
 }
 
 class PetroVisionApp extends StatelessWidget {
@@ -17,47 +26,66 @@ class PetroVisionApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final langController = context.watch<LanguageController>();
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PetroVision',
-      //initialRoute: '/dashboard_screen',
-  //initialRoute: '/welcome_screen',
-home: const DashboardScreen(),
+      locale: langController.locale,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const WelcomeScreen(),
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: const Color(0xFFFBFBFB),
-
-        textTheme: GoogleFonts.dmSansTextTheme(
-          Theme.of(context).textTheme,
-        ).apply(
-          bodyColor: Colors.black87,
-          displayColor: Colors.black,
-        ),
-
+        textTheme: langController.isArabic
+            ? Theme.of(context).textTheme.apply(
+                  bodyColor: Colors.black87,
+                  displayColor: Colors.black,
+                )
+            : GoogleFonts.dmSansTextTheme(
+                Theme.of(context).textTheme,
+              ).apply(
+                bodyColor: Colors.black87,
+                displayColor: Colors.black,
+              ),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: GoogleFonts.dmSans(
-            color: const Color(0xFF4195AF),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          titleTextStyle: langController.isArabic
+              ? const TextStyle(
+                  color: Color(0xFF4195AF),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                )
+              : GoogleFonts.dmSans(
+                  color: const Color(0xFF4195AF),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
           iconTheme: const IconThemeData(color: Color(0xFF4195AF)),
         ),
-
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            textStyle: GoogleFonts.dmSans(fontWeight: FontWeight.bold),
+            textStyle: langController.isArabic
+                ? const TextStyle(fontWeight: FontWeight.bold)
+                : GoogleFonts.dmSans(fontWeight: FontWeight.bold),
           ),
         ),
-
         hoverColor: const Color(0xFF4195AF).withOpacity(0.1),
         splashColor: const Color(0xFF4195AF).withOpacity(0.2),
         highlightColor: Colors.transparent,
         canvasColor: const Color(0xFFEAF3F7),
-
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.macOS: NoAnimationPageTransitionsBuilder(),
@@ -66,16 +94,19 @@ home: const DashboardScreen(),
           },
         ),
       ),
-
       routes: {
-  '/welcome': (context) => const WelcomeScreen(),
-  '/login': (context) => const LoginScreen(),
-  '/loyalty': (context) => const LoyaltyProgramsScreen(),
-  '/members': (context) => const MembersScreen(),
-  '/settings': (context) => const SettingsScreen(),
-  '/customer-home': (context) => const HomePage(),
-  '/dashboard': (context) => const DashboardScreen(),
-},
+        '/welcome': (context) => const WelcomeScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/loyalty': (context) => const LoyaltyProgramsScreen(),
+        '/members': (context) => const MembersScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/customer-home': (context) => const HomePage(
+           userId: '',
+           name: 'Customer',
+           email: '',
+        ),
+        '/dashboard': (context) => const DashboardScreen(),
+      },
     );
   }
 }

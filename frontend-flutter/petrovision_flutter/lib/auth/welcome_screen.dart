@@ -22,7 +22,8 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               Image.asset(
                 'assets/images/logo.png',
-                height: 150,
+                height: 180,
+  fit: BoxFit.contain,
               ),
               const SizedBox(height: 3),
               Text(
@@ -44,7 +45,7 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 10),
               
               Text(
-                "Welcome to\nPetroVision",
+                "Welcome",
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.w800, 

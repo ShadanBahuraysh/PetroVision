@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-
+from datetime import datetime
 from app.supabase_client import supabase
 
 router = APIRouter(prefix="/offers", tags=["Offers"])
@@ -137,3 +137,65 @@ def delete_offer(offer_id: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+""" 
+@router.post("/scan-earn/{qr_code}")
+def scan_earn_qr(qr_code: str, user_id: str, amount: float):
+    try:
+        offer_result = (
+            supabase.table("offer")
+            .select("*")
+            .eq("earn_qr_code", qr_code)
+            .execute()
+        )
+
+        if not offer_result.data:
+            raise HTTPException(status_code=404, detail="Invalid QR code")
+
+        offer = offer_result.data[0]
+
+        account_result = (
+            supabase.table("loyalty_account")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        if not account_result.data:
+            raise HTTPException(status_code=404, detail="Loyalty account not found")
+
+        account = account_result.data[0]
+        account_id = account["account_id"]
+
+        current_points = account.get("current_points", 0) or 0
+
+        earned_points = offer.get("earn_points", 0) or 0
+
+        new_points = current_points + earned_points
+
+        supabase.table("loyalty_account").update({
+            "current_points": new_points
+        }).eq("account_id", account_id).execute()
+
+        supabase.table("transactions").insert({
+            "transaction_id": f"TRX-{datetime.utcnow().timestamp()}",
+            "date": datetime.utcnow().isoformat(),
+            "amount": amount,
+            "points": earned_points,
+            "type": "earn",
+            "offer_id": offer["offer_id"],
+            "account_id": account_id
+        }).execute()
+
+        return {
+            "message": "Points earned successfully",
+            "earned_points": earned_points,
+            "current_points": new_points,
+            "offer": offer
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) """

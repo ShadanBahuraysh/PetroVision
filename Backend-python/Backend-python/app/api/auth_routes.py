@@ -8,6 +8,7 @@ from app.schemas.user_schema import (
     UserLogin,
     UserCreate,
     VerifyOtpRequest,
+    ResendOtpRequest,
     AdminJobRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest
@@ -58,6 +59,20 @@ def verify_otp(data: VerifyOtpRequest):
 
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.post("/resend-otp")
+def resend_otp(data: ResendOtpRequest):
+    try:
+        auth_service.generate_otp(data.email)
+
+        return {
+            "message": "OTP resent successfully",
+            "requires_otp": True
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -216,3 +231,102 @@ def access_dashboard(user_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.get("/admins")
+def get_all_admins():
+    try:
+        admin_result = supabase.table("admin").select("*").execute()
+        admins = admin_result.data or []
+
+        users_result = (
+            supabase.table("users")
+            .select("user_id,fname,lname,email,phone")
+            .execute()
+        )
+
+        users_map = {
+            u["user_id"]: u for u in (users_result.data or [])
+        }
+
+        result = []
+
+        for admin in admins:
+            user = users_map.get(admin["user_id"], {})
+
+            result.append({
+                "user_id": admin["user_id"],
+                "job_number": admin.get("job_number", ""),
+                "name": f"{user.get('fname', '')} {user.get('lname', '')}".strip(),
+                "email": user.get("email", ""),
+                "phone": user.get("phone", ""),
+            })
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+
+@router.post("/admins")
+def add_admin(data: UserCreate):
+    try:
+        user = auth_service.signup(
+            fname=data.fname,
+            lname=data.lname,
+            phone=data.phone,
+            email=data.email,
+            password=data.password,
+            role="admin",
+            job_number=data.job_number,
+            username=None
+        )
+
+        if not user:
+            raise HTTPException(status_code=400, detail="Failed to create admin")
+
+        return {
+            "message": "Admin created successfully",
+            "admin": user
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+@router.put("/admins/{user_id}")
+def update_admin(user_id: str, data: dict):
+    try:
+        update_data = {
+            "fname": data.get("fname"),
+            "lname": data.get("lname"),
+            "email": data.get("email"),
+            "phone": data.get("phone"),
+        }
+
+        user_result = (
+            supabase.table("users")
+            .update(update_data)
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        admin_result = (
+            supabase.table("admin")
+            .update({"job_number": data.get("job_number")})
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        return {
+            "message": "Admin updated successfully",
+            "user": user_result.data,
+            "admin": admin_result.data
+        }
+
+    except Exception as e:
+        print("UPDATE ADMIN ERROR:", repr(e))
+        raise HTTPException(status_code=500, detail=repr(e))
