@@ -179,8 +179,6 @@ class AlertDetailScreen extends StatelessWidget {
 
                           const SizedBox(height: 24),
 
-                          // Mark as resolved button
-                          _ResolveButton(onTap: () => Navigator.pop(context)),
                         ],
                       ),
                     ),
@@ -462,75 +460,6 @@ class _RecommendationTile extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Resolve Button ──────────────────────────────────────────────────────────
-
-class _ResolveButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _ResolveButton({required this.onTap});
-
-  @override
-  State<_ResolveButton> createState() => _ResolveButtonState();
-}
-
-class _ResolveButtonState extends State<_ResolveButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            decoration: BoxDecoration(
-              color: _hovered
-                  ? const Color(0xFF22C55E)
-                  : const Color(0xFF132935),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: (_hovered
-                          ? const Color(0xFF22C55E)
-                          : const Color(0xFF132935))
-                      .withOpacity(0.25),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _hovered
-                      ? Icons.check_circle_rounded
-                      : Icons.check_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Mark as Resolved',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

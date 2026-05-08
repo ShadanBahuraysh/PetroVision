@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../services/loyalty_api_service.dart';
 
 class EarnPointsScreen extends StatefulWidget {
@@ -69,18 +70,40 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
             ),
             const SizedBox(height: 40),
 
-            // QR BOX
-            Container(
-              height: 260,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: primaryNavy,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: const Icon(
-                Icons.qr_code_scanner_rounded,
-                color: Colors.white,
-                size: 90,
+            // QR SCANNER
+            ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: SizedBox(
+                height: 260,
+                width: double.infinity,
+                child: Stack(
+                  children: [
+                    MobileScanner(
+                      onDetect: (capture) {
+                        final barcodes = capture.barcodes;
+                        if (barcodes.isNotEmpty) {
+                          final raw = barcodes.first.rawValue ?? '';
+                          final code = raw.trim().toUpperCase();
+                          final regex = RegExp(r'^EFC-[0-9]{4}$');
+                          if (regex.hasMatch(code)) {
+                            _handleQrCode(context, code, primaryNavy, accentBlue);
+                          }
+                        }
+                      },
+                    ),
+                    // Scan overlay hint
+                    Center(
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -90,7 +113,7 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
               width: double.infinity,
               height: 55,
               child: OutlinedButton.icon(
-                onPressed: () => _dialog(context, primaryNavy, accentBlue),
+                onPressed: () => _dialog(this.context, primaryNavy, accentBlue),
                 icon: const Icon(Icons.keyboard_outlined),
                 label: const Text(
                   "ENTER CODE MANUALLY",
@@ -113,6 +136,74 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
         ),
       ),
     );
+  }
+
+  // Called both from camera scan AND manual entry
+  Future<void> _handleQrCode(BuildContext context, String code, Color navy, Color blue) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    final result = await LoyaltyApiService.scanEarnQr(
+      qrCode: code,
+      userId: widget.userId,
+      amount: 100,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    // Use a fresh context from the widget tree after the async gap
+    final scaffoldContext = context;
+
+    if (result != null && result['error'] != true) {
+      ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+        SnackBar(
+          content: Text("✅ +${result['earned_points']} points added!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      final String detail = (result?['detail'] ?? '').toString();
+      final bool alreadyUsed = detail.toLowerCase().contains('already');
+
+      showDialog(
+        context: scaffoldContext,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(
+                alreadyUsed ? Icons.info_outline_rounded : Icons.error_outline_rounded,
+                color: alreadyUsed ? const Color(0xFF4195AF) : Colors.red,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  alreadyUsed ? "Offer Already Used" : "Something Went Wrong",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            alreadyUsed
+                ? "You have already earned points from this offer.\n\nEach offer can only be used once per user."
+                : "Could not process the QR code. Please try again.",
+            style: const TextStyle(height: 1.5),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(scaffoldContext),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A2E35),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _dialog(BuildContext context, Color navy, Color blue) {
@@ -153,9 +244,7 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
                 ? null
                 : () async {
                     final code = _codeController.text.trim().toUpperCase();
-
                     final regex = RegExp(r'^EFC-[0-9]{4}$');
-
                     if (!regex.hasMatch(code)) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -164,36 +253,11 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
                         ),
                       );
                       return;
-                        }
-
-                    setState(() => _isLoading = true);
-
-                    final result = await LoyaltyApiService.scanEarnQr(
-                      qrCode: code,
-                      userId: widget.userId,
-                      amount: 100,
-                    );
-
-                    if (!mounted) return;
-
+                    }
                     Navigator.pop(context);
-
-                    setState(() => _isLoading = false);
-                    if (result != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              "✅ +${result['earned_points']} points added!"),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("❌ Something went wrong, try again"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                    // Use the outer scaffold context, not the dialog context
+                    if (mounted) {
+                      await _handleQrCode(this.context, code, navy, blue);
                     }
                   },
             style: ElevatedButton.styleFrom(

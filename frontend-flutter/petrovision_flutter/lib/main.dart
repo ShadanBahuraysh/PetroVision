@@ -45,7 +45,27 @@ class PetroVisionApp extends StatelessWidget {
       home: const WelcomeScreen(),
       theme: ThemeData(
         useMaterial3: true,
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF4195AF),
+          primary: const Color(0xFF1A2E35),
+          secondary: const Color(0xFF4195AF),
+          surface: const Color(0xFFFBFBFB),
+          background: const Color(0xFFFBFBFB),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: const Color(0xFFFBFBFB),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titleTextStyle: const TextStyle(
+            color: Color(0xFF1A2E35),
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
+          contentTextStyle: TextStyle(
+            color: Colors.grey.shade700,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
         scaffoldBackgroundColor: const Color(0xFFFBFBFB),
         textTheme: langController.isArabic
             ? Theme.of(context).textTheme.apply(

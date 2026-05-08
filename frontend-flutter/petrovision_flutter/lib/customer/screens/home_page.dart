@@ -53,14 +53,12 @@ class _HomePageState extends State<HomePage> {
         elevation: 0,
         backgroundColor: _scaffoldBg,
         centerTitle: true,
-        leading: _currentIndex == 0
-            ? Builder(
+        leading: Builder(
                 builder: (ctx) => IconButton(
                   icon: const Icon(Icons.menu_rounded, color: _primaryNavy),
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
-              )
-            : null,
+              ),
         automaticallyImplyLeading: false,
         title: Text(
   _currentIndex == 0
@@ -92,7 +90,7 @@ class _HomePageState extends State<HomePage> {
                 key: UniqueKey(),
                 userId: widget.userId,
               )
-            : const OffersPage(),
+            : OffersPage(userId: widget.userId),
 
       bottomNavigationBar: _buildBottomNav(l10n),
       floatingActionButton: FloatingActionButton(

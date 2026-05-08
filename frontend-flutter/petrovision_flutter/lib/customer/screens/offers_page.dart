@@ -3,7 +3,8 @@ import 'package:r/l10n/app_localizations.dart';
 import '../../services/loyalty_api_service.dart';
 import 'offer_details_screen.dart';
 class OffersPage extends StatefulWidget {
-  const OffersPage({super.key});
+  final String userId;
+  const OffersPage({super.key, required this.userId});
 
   @override
   State<OffersPage> createState() => _OffersPageState();
@@ -87,6 +88,7 @@ class _OffersPageState extends State<OffersPage> {
         MaterialPageRoute(
           builder: (_) => OfferDetailsScreen(
             offer: offer,
+            userId: widget.userId,
           ),
         ),
       );

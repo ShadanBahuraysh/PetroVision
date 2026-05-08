@@ -120,14 +120,18 @@ class LoyaltyApiService {
     );
 
     if (res.statusCode == 200) return jsonDecode(res.body);
-    print("scanEarnQr failed: ${res.statusCode} ${res.body}");
+
+    // Return error detail so caller can show the right message
+    try {
+      final errorData = jsonDecode(res.body);
+      return {"error": true, "detail": errorData["detail"] ?? "Something went wrong"};
+    } catch (_) {
+      return {"error": true, "detail": "Something went wrong"};
+    }
   } catch (e) {
     print("scanEarnQr error: $e");
+    return {"error": true, "detail": "Connection error. Please try again."};
   }
-  return null;
 }
 
 }
-
-
-

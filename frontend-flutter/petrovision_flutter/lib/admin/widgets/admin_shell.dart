@@ -22,7 +22,7 @@ class AdminShell extends StatelessWidget {
 });
 
   static const List<_NavItem> _items = [
-    _NavItem(label: 'Dashboard', icon: Icons.insert_chart_outlined_rounded, route: '/'),
+    _NavItem(label: 'Dashboard', icon: Icons.insert_chart_outlined_rounded, route: '/dashboard'),
     _NavItem(label: 'Loyalty Programs', icon: Icons.workspace_premium_outlined, route: '/loyalty'),
     _NavItem(label: 'Members', icon: Icons.groups_2_outlined, route: '/members'),
     _NavItem(label: 'Settings', icon: Icons.settings_outlined, route: '/settings'),
@@ -32,7 +32,17 @@ class AdminShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Row(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 1100),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width < 1100
+                  ? 1100
+                  : MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top,
+              child: Row(
           children: [
             /// SIDEBAR
             Container(
@@ -149,6 +159,9 @@ class AdminShell extends StatelessWidget {
           ],
         ),
       ),
+        ),
+      ),
+    ),
     );
   }
 }

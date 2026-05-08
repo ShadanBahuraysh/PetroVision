@@ -30,6 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _jobNumberController = TextEditingController();
+  bool _jobNumberObscured = true;
 
   @override
   void initState() {
@@ -451,11 +452,7 @@ void _showSnack(String message, {bool success = false}) {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            _field(
-                              'Job Number',
-                              TextEditingController(text: "*******"),
-                              icon: Icons.badge_outlined,
-                            ),
+                            _jobNumberField(),
                             const SizedBox(height: 24),
                             Align(
                               alignment: Alignment.centerRight,
@@ -476,8 +473,11 @@ void _showSnack(String message, {bool success = false}) {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 12,
+                              runSpacing: 12,
                               children: [
                                 _sectionHeader(
                                   Icons.admin_panel_settings_outlined,
@@ -676,6 +676,65 @@ void _showSnack(String message, {bool success = false}) {
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _jobNumberField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Job Number',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _jobNumberController,
+          obscureText: _jobNumberObscured,
+          readOnly: true,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF132935),
+          ),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.badge_outlined,
+              size: 18,
+              color: Color(0xFF4195AF),
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _jobNumberObscured
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                size: 18,
+                color: const Color(0xFF8A959E),
+              ),
+              onPressed: () {
+                setState(() => _jobNumberObscured = !_jobNumberObscured);
+              },
+            ),
+            filled: true,
+            fillColor: const Color(0xFFEEF0F2),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+          ),
         ),
       ],
     );
