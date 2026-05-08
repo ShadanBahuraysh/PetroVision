@@ -5,17 +5,15 @@ import 'package:http/http.dart' as http;
 class AdminJobVerificationScreen extends StatefulWidget {
   final String userId;
 
-  const AdminJobVerificationScreen({
-    super.key,
-    required this.userId,
-  });
+  const AdminJobVerificationScreen({super.key, required this.userId});
 
   @override
   State<AdminJobVerificationScreen> createState() =>
       _AdminJobVerificationScreenState();
 }
 
-class _AdminJobVerificationScreenState extends State<AdminJobVerificationScreen> {
+class _AdminJobVerificationScreenState
+    extends State<AdminJobVerificationScreen> {
   final Color primaryNavy = const Color(0xFF1A2E35);
   final Color accentBlue = const Color(0xFF4195AF);
   final Color scaffoldBg = const Color(0xFFFBFBFB);
@@ -48,10 +46,7 @@ class _AdminJobVerificationScreenState extends State<AdminJobVerificationScreen>
       final response = await http.post(
         Uri.parse('http://localhost:8000/auth/verify-admin-job'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'user_id': widget.userId,
-          'job_number': jobNumber,
-        }),
+        body: json.encode({'user_id': widget.userId, 'job_number': jobNumber}),
       );
 
       if (!mounted) return;
@@ -134,15 +129,20 @@ class _AdminJobVerificationScreenState extends State<AdminJobVerificationScreen>
 
               TextField(
                 controller: jobController,
-                style: TextStyle(color: primaryNavy, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: primaryNavy,
+                  fontWeight: FontWeight.w600,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Enter job number',
                   prefixIcon: Icon(Icons.work_outline, color: accentBlue),
                   errorText: _errorMessage,
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide(
