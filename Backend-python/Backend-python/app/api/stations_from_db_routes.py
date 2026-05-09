@@ -1,75 +1,51 @@
+# ========================================================================================================
+# PetroVision Station Routes
+# --------------------------------------------------------------------------------------------------------
+# This file contains API endpoints for retrieving
+# station data from the PetroVision system.
+#
+# Features included:
+# - Retrieving all stations from the database
+# - Retrieving a specific station by ID
+# - Integrating station service operations
+# - Returning formatted station data
+# - Handling station-not-found scenarios
+# - Handling API request errors
+#
+# It also connects FastAPI route endpoints
+# with the StationService layer to provide
+# station-related data for frontend applications.
+# ========================================================================================================
+
 from fastapi import APIRouter, HTTPException
-from app.supabase_client import supabase
+from app.services.station_service import StationService
 
 router = APIRouter()
+
+station_service = StationService()
 
 
 @router.get("/stations-db")
 def get_stations_from_db():
     try:
-        result = supabase.table("station").select("*").execute()
-        stations = result.data or []
+        return station_service.load_stations()
 
-        output = []
-        for station in stations:
-            lat = station.get("latitude")
-            lng = station.get("longitude")
-
-            if lat is not None and lng is not None:
-                output.append({
-                    "station_id": station.get("station_id"),
-                    "station_name": station.get("station_name"),
-                    "name": station.get("station_name"),
-                    "latitude": lat,
-                    "longitude": lng,
-                    "lat": lat,
-                    "lng": lng,
-                    "address": station.get("address"),
-                    "status": station.get("status"),
-                    "city": station.get("city"),
-                    "street": station.get("street"),
-                    "side_code": station.get("side_code")
-                })
-
-        return output
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/stations-db/{station_id}")
 def get_station_from_db(station_id: str):
     try:
-        result = (
-            supabase.table("station")
-            .select("*")
-            .eq("station_id", station_id)
-            .execute()
-        )
+        station = station_service.get_station_by_id(station_id)
 
-        if not result.data:
+        if not station:
             raise HTTPException(status_code=404, detail="Station not found")
 
-        station = result.data[0]
-        lat = station.get("latitude")
-        lng = station.get("longitude")
-
-        return {
-            "station_id": station.get("station_id"),
-            "station_name": station.get("station_name"),
-            "name": station.get("station_name"),
-            "latitude": lat,
-            "longitude": lng,
-            "lat": lat,
-            "lng": lng,
-            "address": station.get("address"),
-            "status": station.get("status"),
-            "city": station.get("city"),
-            "street": station.get("street"),
-            "side_code": station.get("side_code")
-        }
+        return station
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision Report Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the Report dataclass used
+# within the PetroVision analysis system.
+#
+# Features included:
+# - Managing generated analysis reports
+# - Storing report summaries and metrics
+# - Managing detailed report information
+# - Storing AI-generated recommendations
+# - Automatically generating report timestamps
+# - Converting report objects into dictionaries and JSON format
+#
+# It also provides a structured format for handling
+# AI analysis results and exporting reporting data
+# within the PetroVision platform.
+# ========================================================================================================
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List

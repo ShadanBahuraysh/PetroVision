@@ -1,3 +1,20 @@
+# ========================================================================================================
+# PetroVision Membership Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the Membership class used
+# within the PetroVision loyalty system.
+#
+# Features included:
+# - Managing customer membership information
+# - Storing membership tiers and benefits
+# - Defining minimum points required for tiers
+# - Checking membership eligibility based on points
+# - Converting membership objects into dictionaries
+#
+# It also provides the core structure for handling
+# loyalty membership levels and customer rewards
+# within the PetroVision platform.
+# ========================================================================================================
 class Membership:
     def __init__(
         self,

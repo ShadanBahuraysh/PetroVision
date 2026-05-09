@@ -1,3 +1,21 @@
+# ========================================================================================================
+# PetroVision Loyalty Routes
+# --------------------------------------------------------------------------------------------------------
+# This file contains all loyalty-system API endpoints
+# for the PetroVision system, including:
+# - Loyalty account retrieval
+# - Points balance management
+# - Earning and redeeming loyalty points
+# - Membership and tier handling
+# - Transaction history retrieval
+# - Loyalty program management
+# - Loyalty analytics and admin summaries
+#
+# It also integrates the Strategy design pattern
+# for calculating earned points dynamically
+# based on customer membership tiers.
+# ========================================================================================================
+
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from app.supabase_client import supabase
@@ -29,8 +47,8 @@ def get_loyalty_account(user_id: str):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500,  detail="Internal server error")
 
 
 @router.get("/points/{user_id}")
@@ -56,8 +74,8 @@ def get_points(user_id: str):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500,  detail="Internal server error")
 
 
 @router.post("/earn-points")
@@ -140,8 +158,8 @@ def earn_points(data: EarnPointsRequest):
         }
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500,  detail="Internal server error")
 
 
 @router.post("/redeem-points")
@@ -214,8 +232,8 @@ def redeem_points(data: RedeemPointsRequest):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500,  detail="Internal server error")
 
 
 @router.get("/membership/{user_id}")
@@ -247,8 +265,8 @@ def get_membership(user_id: str):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500,  detail="Internal server error")
 
 
 @router.get("/transactions/{user_id}")
@@ -278,8 +296,8 @@ def get_transactions(user_id: str):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500,  detail="Internal server error")
 
 
 @router.get("/programs")
@@ -288,8 +306,11 @@ def get_loyalty_programs():
         result = supabase.table("loyalty_program").select("*").execute()
         return result.data or []
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(status_code=500,  detail="Internal server error")
 
 
 @router.get("/admin-summary")
@@ -335,6 +356,9 @@ def get_loyalty_admin_summary(year: int = datetime.utcnow().year, month: int | N
             "member_growth": member_growth,
             "tier_distribution": tier_counts,
         }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    
+    except HTTPException:
+        raise
+    
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision Issue Mapping Utilities
+# --------------------------------------------------------------------------------------------------------
+# This file contains utility mappings and helper
+# functions used for interpreting operational
+# issues within the PetroVision analytics system.
+#
+# Features included:
+# - Mapping technical feature names to readable issue labels
+# - Providing operational issue explanations
+# - Generating recommendation actions for issues
+# - Simplifying machine learning feature outputs
+# - Supporting explainable AI analysis workflows
+#
+# It also converts raw analytics and machine-learning
+# outputs into understandable operational insights
+# and recommendations for dashboard reporting.
+# ========================================================================================================
+
 ISSUE_LABELS = {
     "actual_inventory_usage": "Inventory inefficiency",
     "total_sales": "Weak sales performance",

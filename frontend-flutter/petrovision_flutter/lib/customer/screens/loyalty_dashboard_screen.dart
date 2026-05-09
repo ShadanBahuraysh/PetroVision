@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Loyalty Dashboard Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the LoyaltyDashboardScreen
+// used for displaying customer loyalty data
+// and reward-management actions within
+// the PetroVision platform.
+//
+// Features included:
+// - Displaying customer loyalty points
+// - Displaying membership tier progress
+// - Loading loyalty and membership data from APIs
+// - Supporting reward earning workflows
+// - Supporting reward redemption workflows
+// - Displaying tier progression indicators
+// - Managing loading and loyalty-data states
+// - Providing responsive loyalty dashboard UI
+//
+// It also integrates loyalty APIs,
+// reward-management workflows,
+// and customer membership tracking
+// within the PetroVision platform.
+// ========================================================================================================
 import 'package:flutter/material.dart';
 import 'package:r/l10n/app_localizations.dart';
 import 'earn_points_screen.dart';
@@ -30,14 +53,29 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
   }
 
   Future<void> _loadData() async {
-    final points = await LoyaltyApiService.getPoints(widget.userId);
-    final membership = await LoyaltyApiService.getMembership(widget.userId);
-    setState(() {
-      currentPoints = points;
-      tier = membership?["tier"] ?? "Bronze";
-      isLoading = false;
-    });
+  int points = 0;
+  Map<String, dynamic>? membership;
+
+  try {
+    points = await LoyaltyApiService.getPoints(widget.userId);
+  } catch (_) {
+    points = 0;
   }
+
+  try {
+    membership = await LoyaltyApiService.getMembership(widget.userId);
+  } catch (_) {
+    membership = null;
+  }
+
+  if (!mounted) return;
+
+  setState(() {
+    currentPoints = points;
+    tier = membership?["tier"] ?? "Bronze";
+    isLoading = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {

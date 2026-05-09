@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Offer Details Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the OfferDetailsScreen
+// used for displaying loyalty-offer details
+// and reward actions within the PetroVision platform.
+//
+// Features included:
+// - Displaying loyalty offer information
+// - Displaying earn and redeem point values
+// - Loading customer loyalty-point data from APIs
+// - Supporting QR earning workflows
+// - Supporting reward redemption workflows
+// - Displaying offer descriptions and terms
+// - Managing loading and redemption states
+// - Providing responsive offer-details UI
+//
+// It also integrates loyalty APIs,
+// reward-redemption workflows,
+// and customer loyalty interactions
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import '../../services/loyalty_api_service.dart';
 import 'confirm_redemption_screen.dart';
@@ -32,9 +55,21 @@ class _OfferDetailsScreenState extends State<OfferDetailsScreen> {
   }
 
   Future<void> _loadPoints() async {
-    final pts = await LoyaltyApiService.getPoints(widget.userId);
-    if (mounted) setState(() { _currentPoints = pts; _loadingPoints = false; });
+  int pts = 0;
+
+  try {
+    pts = await LoyaltyApiService.getPoints(widget.userId);
+  } catch (_) {
+    pts = 0;
   }
+
+  if (!mounted) return;
+
+  setState(() {
+    _currentPoints = pts;
+    _loadingPoints = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision Performance Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the PerformanceModel class used
+# in the Template Method design pattern implementation
+# within the PetroVision analytics system.
+#
+# Features included:
+# - Preprocessing station performance data
+# - Running AI-based performance predictions
+# - Generating structured performance reports
+# - Calculating average performance scores
+# - Formatting prediction outputs
+# - Handling empty prediction results
+#
+# It also implements the analytics workflow defined
+# by the Template base class to provide
+# station-performance analysis and reporting.
+# ========================================================================================================
 import pandas as pd
 from typing import Any, Dict, List
 

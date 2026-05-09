@@ -341,4 +341,16 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get termsSec9P1 =>
       'تخضع هذه الشروط لقوانين الدولة التي تعمل فيها بترومين.';
+
+  @override
+  String get nearestStations => 'أقرب المحطات';
+
+  @override
+  String get openMaps => 'فتح الخرائط';
+
+  @override
+  String get openThisStation => 'فتح هذه المحطة في خرائط Google؟';
+
+  @override
+  String get cancel => 'إلغاء';
 }

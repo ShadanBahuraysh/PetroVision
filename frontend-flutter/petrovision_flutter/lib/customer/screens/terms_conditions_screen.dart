@@ -1,3 +1,23 @@
+// ========================================================================================================
+// PetroVision Terms and Conditions Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the TermsConditionsScreen
+// used for displaying the application terms
+// and conditions within the PetroVision platform.
+//
+// Features included:
+// - Displaying localized terms and conditions content
+// - Supporting Arabic and English text through localization
+// - Supporting RTL and LTR back-navigation icons
+// - Organizing terms into structured content sections
+// - Displaying readable policy and usage information
+// - Providing responsive scrollable terms UI
+//
+// It also integrates localization support,
+// legal-information display,
+// and structured content presentation
+// within the PetroVision application.
+// ========================================================================================================
 import 'package:flutter/material.dart';
 import 'package:r/l10n/app_localizations.dart';
 

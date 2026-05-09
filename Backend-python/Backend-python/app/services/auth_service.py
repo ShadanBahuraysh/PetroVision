@@ -1,3 +1,25 @@
+# ========================================================================================================
+# PetroVision Authentication Service
+# --------------------------------------------------------------------------------------------------------
+# This file defines the AuthService class used
+# for authentication and user-management operations
+# within the PetroVision system.
+#
+# Features included:
+# - User authentication and login validation
+# - User registration and account creation
+# - Password hashing and verification
+# - OTP generation and verification
+# - Password reset functionality
+# - Email notification handling
+# - Admin job-number verification
+# - User-role management and attachment
+# - Loyalty account and membership initialization
+#
+# It also integrates authentication security,
+# OTP verification workflows, and user-role
+# management with the PetroVision database system.
+# ========================================================================================================
 import os
 import random
 import time

@@ -1,3 +1,29 @@
+// ========================================================================================================
+// PetroVision Stations Page
+// --------------------------------------------------------------------------------------------------------
+// This file defines the StationsPage used for
+// displaying PetroVision fuel stations
+// and nearby station information within the application.
+//
+// Features included:
+// - Loading station data from backend APIs
+// - Displaying nearby stations and station details
+// - Supporting geolocation and distance calculations
+// - Sorting stations based on user proximity
+// - Opening station locations in Google Maps
+// - Displaying interactive station-detail dialogs
+// - Displaying featured station offers
+// - Supporting interactive station maps using FlutterMap
+// - Managing loading, location, and station states
+// - Providing responsive station-list UI components
+//
+// It also integrates station APIs,
+// geolocation services,
+// map visualization workflows,
+// and station-navigation functionality
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -5,7 +31,7 @@ import 'package:r/l10n/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
-
+import 'package:url_launcher/url_launcher.dart';
 class StationsPage extends StatefulWidget {
   const StationsPage({super.key});
 
@@ -29,7 +55,12 @@ class _StationsPageState extends State<StationsPage> {
     try {
       final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
       if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
+        List data = [];
+          try {
+            data = json.decode(response.body);
+          } catch (_) {
+            data = [];
+          }
         final List<Map<String, dynamic>> loaded = data.map((s) => {
           "title": "Petromin - ${s['name']}",
           "location": s['address'] ?? '',
@@ -41,36 +72,67 @@ class _StationsPageState extends State<StationsPage> {
           "lng": s['lng'],
           "status": s['status'] ?? 'active',
         }).toList();
-
+        if (!mounted) return;
         setState(() {
           stations = loaded;
           _statuses = _generateStatuses(loaded.length);
           _isLoading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => _isLoading = false);
       }
     } catch (e) {
+    if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
 
   Future<void> _getUserLocation() async {
   try {
-    // للويب نستخدم geolocator بشكل مختلف
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    if (!serviceEnabled) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Please enable location services',
+      ),
+    ),
+  );
+
+  return;
+}
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      if (permission == LocationPermission.denied) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Location permission is required',
+      ),
+    ),
+  );
+
+  return;
+}
     }
-    if (permission == LocationPermission.deniedForever) return;
+    if (permission == LocationPermission.deniedForever) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Location permission permanently denied',
+      ),
+    ),
+  );
+
+  return;
+}
 
     final position = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.low,
+        accuracy: LocationAccuracy.high,
         timeLimit: Duration(seconds: 10),
       ),
     );
@@ -80,6 +142,24 @@ class _StationsPageState extends State<StationsPage> {
     _sortByDistance();
   } catch (e) {
     debugPrint('Location error: $e');
+  }
+}
+Future<void> _openGoogleMaps(double lat, double lng) async {
+  final Uri googleMapsUrl = Uri.parse(
+    'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+  );
+
+  if (!await launchUrl(
+    googleMapsUrl,
+    mode: LaunchMode.externalApplication,
+  )) {
+    if (!mounted) return;
+
+ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(
+    content: Text('Could not open Google Maps'),
+  ),
+);
   }
 }
 
@@ -371,20 +451,70 @@ class _StationsPageState extends State<StationsPage> {
                   const SizedBox(height: 18),
                   _infoRow(Icons.phone_rounded, l10n.contactNumber, station['phone'] ?? "920003467", accentBlue),
                   const SizedBox(height: 30),
-                  Center(
-                    child: SizedBox(
-                      width: 120, height: 45,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryNavy,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          elevation: 0,
-                        ),
-                        child: Text(l10n.close, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ),
+
+Row(
+  children: [
+
+    Expanded(
+      child: SizedBox(
+        height: 48,
+        child: ElevatedButton.icon(
+  onPressed: () => _openGoogleMaps(lat, lng),
+
+  icon: const Icon(
+    Icons.map_rounded,
+    color: Colors.white,
+    size: 18,
+  ),
+
+  label:  Text(
+     l10n.openMaps,
+    style: TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+
+  style: ElevatedButton.styleFrom(
+    backgroundColor: accentBlue,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(15),
+    ),
+    elevation: 0,
+  ),
+),
+      ),
+    ),
+
+    const SizedBox(width: 12),
+
+    Expanded(
+      child: SizedBox(
+        height: 48,
+        child: ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryNavy,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            elevation: 0,
+          ),
+
+          child: Text(
+            l10n.close,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    ),
+
+  ],
+),
                 ],
               ),
             ),

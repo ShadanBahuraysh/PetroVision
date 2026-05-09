@@ -1,3 +1,27 @@
+// ========================================================================================================
+// PetroVision Dashboard Widgets
+// --------------------------------------------------------------------------------------------------------
+// This file defines reusable dashboard widgets
+// and visualization components used within the
+// PetroVision admin dashboard application.
+//
+// Features included:
+// - Building reusable dashboard cards and layouts
+// - Displaying KPI statistics and analytics
+// - Displaying member growth visualizations
+// - Displaying loyalty-tier distribution charts
+// - Displaying station-network maps
+// - Displaying AI-generated explanations
+// - Displaying station alerts and performance tables
+// - Supporting interactive dashboard navigation
+// - Providing responsive and animated UI components
+//
+// It also centralizes reusable dashboard UI
+// components, analytics visualizations,
+// and operational monitoring widgets
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import '../models/dashboard_models.dart';
 import '../screens/alert_detail_screen.dart';
@@ -450,6 +474,7 @@ class StationNetworkCard extends StatelessWidget {
   }
 
   void _showFullMap(BuildContext context) {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) => Dialog(

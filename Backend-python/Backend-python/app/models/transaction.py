@@ -1,3 +1,23 @@
+# ========================================================================================================
+# PetroVision Transaction Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the Transaction class used
+# within the PetroVision loyalty system.
+#
+# Features included:
+# - Managing loyalty transaction records
+# - Storing transaction details and amounts
+# - Handling earned and redeemed points
+# - Linking transactions to users and stations
+# - Identifying transaction types
+# - Automatically generating transaction timestamps
+# - Converting transaction objects into dictionaries
+#
+# It also provides the core structure for tracking
+# loyalty point activities and customer transactions
+# within the PetroVision platform.
+# ========================================================================================================
+
 from datetime import datetime
 
 

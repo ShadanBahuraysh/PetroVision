@@ -1,3 +1,24 @@
+// ========================================================================================================
+// PetroVision Admin Job Verification Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the AdminJobVerificationScreen
+// used for verifying administrator job numbers
+// within the PetroVision authentication workflow.
+//
+// Features included:
+// - Verifying administrator job numbers
+// - Sending verification requests to the backend API
+// - Handling authentication and validation errors
+// - Managing loading and verification states
+// - Displaying verification feedback messages
+// - Supporting secure admin-access workflows
+// - Providing responsive verification UI components
+//
+// It also integrates administrator-verification
+// operations with the PetroVision authentication
+// and dashboard-access system.
+// ========================================================================================================
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -58,9 +79,14 @@ class _AdminJobVerificationScreenState
           (route) => false,
         );
       } else {
-        final data = json.decode(response.body);
+        String message = 'Invalid job number';
+        try {
+          final data = json.decode(response.body);
+          message = data['detail'] ?? message;
+        } catch (_) {}
+
         setState(() {
-          _errorMessage = data['detail'] ?? 'Invalid job number';
+          _errorMessage = message;
         });
       }
     } catch (e) {

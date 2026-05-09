@@ -1,3 +1,24 @@
+// ========================================================================================================
+// PetroVision Transaction History Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the HistoryPage used for
+// displaying customer loyalty transaction history
+// within the PetroVision rewards system.
+//
+// Features included:
+// - Loading customer transaction history from APIs
+// - Displaying loyalty earn and redeem transactions
+// - Formatting transaction dates and timestamps
+// - Displaying transaction-point summaries
+// - Handling loading and empty-history states
+// - Supporting multilingual localization content
+// - Providing responsive transaction-history UI
+//
+// It also integrates loyalty transaction APIs,
+// customer reward-history workflows,
+// and transaction-visualization features
+// within the PetroVision platform.
+// ========================================================================================================
 import 'package:flutter/material.dart';
 import 'package:r/l10n/app_localizations.dart';
 import '../../services/loyalty_api_service.dart';
@@ -29,12 +50,30 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _loadTransactions() async {
+  try {
     final data = await LoyaltyApiService.getTransactions(widget.userId);
+
+    if (!mounted) return;
+
     setState(() {
       transactions = data;
       isLoading = false;
     });
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Failed to load transactions"),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   String _formatDate(String? dateStr) {
     if (dateStr == null) return "";
@@ -86,7 +125,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     final Color themeColor = accentBlue;
                     final int points = item["points"] ?? 0;
                     final double amount =
-                        (item["amount"] ?? 0).toDouble();
+                        double.tryParse(item["amount"].toString()) ?? 0;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),

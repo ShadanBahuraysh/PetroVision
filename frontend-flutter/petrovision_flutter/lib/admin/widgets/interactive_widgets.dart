@@ -1,3 +1,25 @@
+// ========================================================================================================
+// PetroVision Interactive Widgets
+// --------------------------------------------------------------------------------------------------------
+// This file defines reusable interactive UI widgets
+// and button styles used within the PetroVision
+// dashboard application.
+//
+// Features included:
+// - Building reusable hoverable UI surfaces
+// - Supporting interactive hover animations
+// - Managing clickable dashboard components
+// - Providing reusable primary button styles
+// - Providing reusable outlined button styles
+// - Supporting responsive desktop interactions
+// - Managing consistent dashboard UI styling
+//
+// It also centralizes reusable interaction,
+// animation, and styling components used
+// across the PetroVision administrative
+// dashboard interface.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 
 class HoverSurface extends StatefulWidget {
@@ -62,7 +84,6 @@ class _HoverSurfaceState extends State<HoverSurface> {
   }
 }
 
-/// ✅ PRIMARY BUTTON (navy)
 ButtonStyle darkDesktopButtonStyle() {
   return ButtonStyle(
     mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
@@ -95,7 +116,6 @@ ButtonStyle darkDesktopButtonStyle() {
   );
 }
 
-/// ✅ OUTLINED BUTTON (clean grey + navy text)
 ButtonStyle outlinedDesktopButtonStyle() {
   return ButtonStyle(
     mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),

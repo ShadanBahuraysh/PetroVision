@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision About Us Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the AboutUsScreen used for
+// presenting PetroVision company information
+// and platform details within the application.
+//
+// Features included:
+// - Displaying PetroVision company information
+// - Supporting multilingual localization content
+// - Displaying company vision and mission sections
+// - Displaying interactive animated information cards
+// - Supporting RTL and LTR layouts
+// - Displaying achievement and platform highlights
+// - Displaying contact information and support details
+// - Providing responsive and interactive UI components
+//
+// It also integrates localization support,
+// company-brand presentation,
+// and interactive informational content
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:r/l10n/app_localizations.dart';
 
@@ -78,6 +101,16 @@ class AboutUsScreen extends StatelessWidget {
             height: 200,
             width: double.infinity,
             fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 200,
+              width: double.infinity,
+              color: Colors.grey.shade200,
+              child: const Center(
+                child: Icon(Icons.broken_image_outlined),
+              ),
+            );
+          },
           ),
         ),
         const SizedBox(height: 20),

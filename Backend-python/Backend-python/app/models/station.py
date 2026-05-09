@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision Station Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the Station class used
+# within the PetroVision platform.
+#
+# Features included:
+# - Managing fuel station information
+# - Storing station location and address details
+# - Managing station operational status
+# - Handling station ratings and metadata
+# - Checking whether a station is active
+# - Converting station objects into dictionaries
+#
+# It also provides the core structure for handling
+# station-related data used by maps, analytics,
+# and operational management features.
+# ========================================================================================================
+
 class Station:
     def __init__(
         self,

@@ -1,3 +1,21 @@
+# ========================================================================================================
+# PetroVision Loyalty Account Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the LoyaltyAccount class used
+# within the PetroVision loyalty system.
+#
+# Features included:
+# - Managing customer loyalty accounts
+# - Storing loyalty account information
+# - Adding loyalty points
+# - Redeeming loyalty points
+# - Validating point redemption operations
+# - Converting loyalty account objects into dictionaries
+#
+# It also provides the core business logic for
+# handling customer loyalty balances and
+# membership-linked loyalty operations.
+# ========================================================================================================
 class LoyaltyAccount:
     def __init__(self, account_id, user_id, current_points=0, membership_id=None):
         self.account_id = account_id

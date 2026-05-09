@@ -1,3 +1,28 @@
+// ========================================================================================================
+// PetroVision Settings Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the SettingsScreen and related
+// UI components used for managing administrator
+// settings and profile operations within the
+// PetroVision admin dashboard.
+//
+// Features included:
+// - Loading administrator account data
+// - Updating admin profile information
+// - Adding new administrator accounts
+// - Editing administrator accounts
+// - Displaying system information and platform status
+// - Managing admin profile settings
+// - Handling API requests and validation errors
+// - Displaying success and error notifications
+// - Providing interactive settings UI components
+//
+// It also integrates administrator-management
+// workflows, backend API operations, and
+// system configuration features within the
+// PetroVision platform.
+// ========================================================================================================
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -144,7 +169,7 @@ void _showSnack(String message, {bool success = false}) {
             backgroundColor: Colors.green,
           ),
         );
-        _loadAdmins();
+        await _loadAdmins();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -155,6 +180,8 @@ void _showSnack(String message, {bool success = false}) {
       }
     } catch (e) {
       debugPrint("update admin error: $e");
+     _showSnack("Connection error. Please try again.");
+
     }
   }
 
@@ -186,7 +213,7 @@ void _showSnack(String message, {bool success = false}) {
     if (res.statusCode == 200 || res.statusCode == 201) {
       Navigator.pop(context);
       _showSnack("Admin added successfully", success: true);
-      _loadAdmins();
+     await  _loadAdmins();
     } else {
       _showSnack("❌ ${_extractErrorMessage(res)}");
     }
@@ -269,7 +296,7 @@ void _showSnack(String message, {bool success = false}) {
 
     if (res.statusCode == 200) {
       Navigator.pop(context);
-      _loadAdmins();
+      await _loadAdmins();
       _showSnack("Admin updated successfully", success: true);
     } else {
       _showSnack("❌ ${_extractErrorMessage(res)}");

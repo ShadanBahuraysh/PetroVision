@@ -344,4 +344,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get termsSec9P1 =>
       'These Terms are governed by the laws of the country where PetroMin operates.';
+
+  @override
+  String get nearestStations => 'Nearest Stations';
+
+  @override
+  String get openMaps => 'Open Maps';
+
+  @override
+  String get openThisStation => 'Open this station in Google Maps?';
+
+  @override
+  String get cancel => 'Cancel';
 }

@@ -1,3 +1,27 @@
+// ========================================================================================================
+// PetroVision Main Application Entry
+// --------------------------------------------------------------------------------------------------------
+// This file defines the main application entry point
+// and global application configuration
+// for the PetroVision platform.
+//
+// Features included:
+// - Initializing the PetroVision application
+// - Configuring localization and multilingual support
+// - Managing application-wide language settings
+// - Configuring global application themes and styling
+// - Configuring routing and screen navigation
+// - Applying responsive typography and Google Fonts
+// - Configuring page transition behaviors
+// - Managing provider-based state initialization
+//
+// It also integrates localization workflows,
+// global UI configuration,
+// navigation management,
+// and application startup logic
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:r/l10n/app_localizations.dart';

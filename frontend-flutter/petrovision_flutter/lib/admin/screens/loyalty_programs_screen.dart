@@ -1,3 +1,28 @@
+// ========================================================================================================
+// PetroVision Loyalty Programs Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the LoyaltyProgramsScreen
+// and related UI components used for managing
+// loyalty offers and QR-code operations within
+// the PetroVision admin dashboard.
+//
+// Features included:
+// - Loading loyalty offers from the backend
+// - Creating and editing loyalty offers
+// - Displaying loyalty KPI statistics
+// - Searching and filtering loyalty offers
+// - Displaying offer status and reward details
+// - Generating and displaying QR codes
+// - Supporting earn and redeem QR workflows
+// - Managing loyalty offer dialogs and forms
+// - Handling API request and loading states
+// - Providing interactive dashboard UI components
+//
+// It also integrates loyalty-program APIs,
+// QR-code workflows, and offer-management
+// functionality within the PetroVision platform.
+// ========================================================================================================
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -325,22 +350,32 @@ class _LoyaltyProgramsScreenState extends State<LoyaltyProgramsScreen> {
                     'offer_type':     category,
                     'status':         status,
                   });
-                  if (existing != null && existing.offerId != null) {
-                    // UPDATE
-                    await http.put(
+                  final res = existing != null && existing.offerId != null
+                  ? await http.put(
                       Uri.parse('$_baseUrl/offers/${existing.offerId}'),
                       headers: {'Content-Type': 'application/json'},
                       body: body,
-                    );
-                  } else {
-                    // CREATE
-                    await http.post(
+                    )
+                  : await http.post(
                       Uri.parse('$_baseUrl/offers/'),
                       headers: {'Content-Type': 'application/json'},
                       body: body,
                     );
-                  }
-                  _loadOffers(); // Refresh from DB
+
+                if (!mounted) return;
+
+                if (res.statusCode == 200 || res.statusCode == 201) {
+                  _loadOffers();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isEdit ? 'Offer updated successfully.' : 'Offer created successfully.'),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to save offer.')),
+                  );
+                }
                 },
                 child: Text(isEdit ? 'Update' : 'Save'),
               ),

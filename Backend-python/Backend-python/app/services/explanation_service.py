@@ -1,3 +1,25 @@
+# ========================================================================================================
+# PetroVision Explanation Service
+# --------------------------------------------------------------------------------------------------------
+# This file defines the ExplanationService class used
+# for generating AI-powered operational explanations
+# and summaries within the PetroVision system.
+#
+# Features included:
+# - Generating station performance explanations
+# - Generating network overview explanations
+# - Comparing station performance results
+# - Integrating with external AI language models
+# - Building fallback local explanations
+# - Formatting AI prompts and summaries
+# - Managing explanation caching
+# - Compacting analysis data for AI processing
+#
+# It also combines analysis results, recommendation
+# insights, and AI-generated explanations to provide
+# explainable operational decision support.
+# ========================================================================================================
+
 import os
 import requests
 

@@ -1,3 +1,22 @@
+// ========================================================================================================
+// PetroVision Redemption Success Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the RedemptionSuccessScreen
+// used for displaying successful reward-redemption
+// feedback within the PetroVision loyalty system.
+//
+// Features included:
+// - Displaying successful redemption confirmation
+// - Providing redemption-success feedback UI
+// - Supporting navigation back to loyalty workflows
+// - Displaying responsive success-state layouts
+// - Providing branded loyalty-success styling
+//
+// It also integrates redemption-confirmation workflows
+// and post-redemption navigation handling
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'loyalty_dashboard_screen.dart';
 

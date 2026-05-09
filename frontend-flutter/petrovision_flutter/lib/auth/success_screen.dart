@@ -1,3 +1,23 @@
+// ========================================================================================================
+// PetroVision Success Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the SuccessScreen used after
+// successful authentication or account verification
+// within the PetroVision customer workflow.
+//
+// Features included:
+// - Displaying successful verification feedback
+// - Showing animated loading and transition effects
+// - Redirecting customers to the home page
+// - Passing user account data to the customer interface
+// - Managing animation lifecycle and navigation timing
+// - Providing a smooth post-login transition screen
+//
+// It also connects the authentication flow
+// with the customer home page after successful
+// login, signup, or OTP verification.
+// ========================================================================================================
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../customer/screens/home_page.dart';
@@ -73,7 +93,7 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
                 width: 100,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(28), // حواف مطابقة لكروت الهوم
+                  borderRadius: BorderRadius.circular(28), 
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.04),

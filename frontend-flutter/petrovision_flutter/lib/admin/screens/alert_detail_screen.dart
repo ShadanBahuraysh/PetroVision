@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Alert Detail Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the AlertDetailScreen and
+// related UI components used for displaying
+// detailed alert information within the
+// PetroVision dashboard application.
+//
+// Features included:
+// - Displaying detailed station alerts
+// - Showing alert severity and operational impact
+// - Displaying AI-generated recommendations
+// - Supporting dashboard navigation
+// - Presenting station and alert summary data
+// - Displaying recommendation timelines
+// - Providing interactive and responsive UI components
+//
+// It also provides a structured alert-details
+// interface for monitoring operational issues
+// and reviewing AI-generated recommendations
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import '../models/dashboard_models.dart';
 
@@ -16,7 +39,6 @@ class AlertDetailScreen extends StatelessWidget {
       body: SafeArea(
         child: Row(
           children: [
-            // ── Sidebar (matches AdminShell style) ──────────────────
             Container(
               width: 246,
               color: navy,
@@ -89,7 +111,6 @@ class AlertDetailScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Main Content ─────────────────────────────────────────
             Expanded(
               child: Column(
                 children: [
@@ -193,7 +214,6 @@ class AlertDetailScreen extends StatelessWidget {
   }
 }
 
-// ── Alert Summary Card ──────────────────────────────────────────────────────
 
 class _AlertSummaryCard extends StatelessWidget {
   final AlertItem alert;
@@ -304,7 +324,6 @@ class _AlertSummaryCard extends StatelessWidget {
   }
 }
 
-// ── Recommendations Card ────────────────────────────────────────────────────
 
 class _RecommendationsCard extends StatelessWidget {
   final AlertItem alert;
@@ -465,7 +484,6 @@ class _RecommendationTile extends StatelessWidget {
   }
 }
 
-// ── Small helpers ───────────────────────────────────────────────────────────
 
 class _InfoChip extends StatelessWidget {
   final IconData icon;

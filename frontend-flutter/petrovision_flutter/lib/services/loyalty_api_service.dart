@@ -1,5 +1,30 @@
+// ========================================================================================================
+// PetroVision Loyalty API Service
+// --------------------------------------------------------------------------------------------------------
+// This file defines the LoyaltyApiService used
+// for handling loyalty-related API communication
+// between the Flutter frontend and backend.
+//
+// Features included:
+// - Loading customer loyalty points
+// - Loading customer membership information
+// - Loading transaction history
+// - Loading available loyalty offers
+// - Sending earn-points requests
+// - Sending redeem-points requests
+// - Processing QR-code earning requests
+// - Handling API errors and fallback responses
+// - Returning structured loyalty data to UI screens
+//
+// It also centralizes loyalty API calls,
+// reward-management operations,
+// and backend communication logic
+// within the PetroVision application.
+// ========================================================================================================
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 class LoyaltyApiService {
   static const String baseUrl = "http://127.0.0.1:8000";
@@ -12,7 +37,7 @@ class LoyaltyApiService {
         return data["current_points"] ?? 0;
       }
     } catch (e) {
-      print("getPoints error: $e");
+      debugPrint("getPoints error: $e");
     }
     return 0;
   }
@@ -24,7 +49,7 @@ class LoyaltyApiService {
       );
       if (res.statusCode == 200) return jsonDecode(res.body);
     } catch (e) {
-      print("getMembership error: $e");
+      debugPrint("getMembership error: $e");
     }
     return null;
   }
@@ -36,7 +61,7 @@ class LoyaltyApiService {
       );
       if (res.statusCode == 200) return jsonDecode(res.body);
     } catch (e) {
-      print("getTransactions error: $e");
+      debugPrint("getTransactions error: $e");
     }
     return [];
   }
@@ -46,7 +71,7 @@ class LoyaltyApiService {
       final res = await http.get(Uri.parse("$baseUrl/offers/"));
       if (res.statusCode == 200) return jsonDecode(res.body);
     } catch (e) {
-      print("getAllOffers error: $e");
+      debugPrint("getAllOffers error: $e");
     }
     return [];
   }
@@ -70,7 +95,7 @@ class LoyaltyApiService {
       );
       if (res.statusCode == 200) return jsonDecode(res.body);
     } catch (e) {
-      print("earnPoints error: $e");
+      debugPrint("earnPoints error: $e");
     }
     return null;
   }
@@ -92,9 +117,9 @@ class LoyaltyApiService {
       );
 
       if (res.statusCode == 200) return jsonDecode(res.body);
-      print("redeemPoints failed: ${res.statusCode} ${res.body}");
+      debugPrint("redeemPoints failed: ${res.statusCode} ${res.body}");
     } catch (e) {
-      print("redeemPoints error: $e");
+      debugPrint("redeemPoints error: $e");
     }
     return null;
   }
@@ -129,7 +154,7 @@ class LoyaltyApiService {
       return {"error": true, "detail": "Something went wrong"};
     }
   } catch (e) {
-    print("scanEarnQr error: $e");
+    debugPrint("scanEarnQr error: $e");
     return {"error": true, "detail": "Connection error. Please try again."};
   }
 }

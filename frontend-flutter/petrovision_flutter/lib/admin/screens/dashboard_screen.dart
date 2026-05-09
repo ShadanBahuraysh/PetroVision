@@ -1,3 +1,29 @@
+// ========================================================================================================
+// PetroVision Dashboard Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the DashboardScreen and related
+// dashboard operations used within the PetroVision
+// admin dashboard application.
+//
+// Features included:
+// - Loading dashboard analytics data
+// - Running AI analysis manually
+// - Displaying KPI statistics and station performance
+// - Displaying loyalty-program analytics
+// - Displaying station alerts and recommendations
+// - Displaying AI-generated explanations
+// - Comparing station performance results
+// - Displaying station analysis details
+// - Exporting and downloading analysis reports
+// - Saving reports to the database
+// - Handling dashboard loading and error states
+//
+// It also integrates backend analytics APIs,
+// AI explanation services, loyalty analytics,
+// and interactive dashboard visualizations
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -45,6 +71,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDashboardData();
   }
 
+  Future<void> _prepareDashboard() async {
+    await _loadDashboardData();
+
+    final bool hasAnalysisCache =
+        overview != null &&
+        overview?['cached'] != false &&
+        (overview?['total_stations'] ?? 0) > 0;
+
+    if (!hasAnalysisCache) {
+      await _runInitialAnalysisInBackground();
+    }
+  }
+
+  Future<void> _runInitialAnalysisInBackground() async {
+    if (isRunningAnalysis) return;
+
+    setState(() {
+      isRunningAnalysis = true;
+      errorMessage = null;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/analysis/run-all?force=false'),
+      );
+
+      if (response.statusCode == 200) {
+        await _loadDashboardData();
+      }
+    } catch (e) {
+      errorMessage = 'Initial analysis failed to run';
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      isRunningAnalysis = false;
+    });
+  }
+
   Future<void> _loadDashboardData() async {
     setState(() {
       isLoading = true;
@@ -56,9 +122,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _fetchOverview(),
         _fetchTopStations(),
         _fetchStationsMap(),
-        _fetchOverviewExplanation(),
         _fetchLoyaltySummary(),
       ]);
+
+      final bool hasAnalysisCache =
+          overview != null &&
+          overview?['cached'] != false &&
+          (overview?['total_stations'] ?? 0) > 0;
+
+      if (hasAnalysisCache) {
+        await _fetchOverviewExplanation();
+      } else {
+        overviewExplanation = null;
+      }
     } catch (e) {
       errorMessage = 'Failed to load dashboard data';
     }
@@ -79,7 +155,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
 
       if (response.statusCode == 200) {
-        await _loadDashboardData();
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 'running') {
+          errorMessage = 'Analysis is already running';
+        } else {
+          await _loadDashboardData();
+        }
       } else {
         errorMessage = 'Analysis failed to run';
       }
@@ -1050,6 +1132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _exportAnalysisReport() async {
+    debugPrint("EXPORT CLICKED");
     try {
       final res = await http.get(
         Uri.parse('$baseUrl/analysis/export?save_to_db=false'),
@@ -1482,7 +1565,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return (value ?? '').toString().replaceAll('\n', ' ').replaceAll('\t', ' ');
   }
 
-
   Widget _totalCustomersCard() {
     return SectionCard(
       child: Row(
@@ -1528,7 +1610,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -1684,7 +1765,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
             },
           ),
-          
+
           const SizedBox(height: 22),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -1723,7 +1804,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 20),
                   Expanded(
                     child: SectionCard(
@@ -1753,31 +1834,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }
               return Row(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Expanded(
-      flex: 2,
-      child: SectionCard(
-        child: StationNetworkCard(
-          mapStations: mapStations,
-          onStationTap: _showStationDetails,
-        ),
-      ),
-    ),
-    const SizedBox(width: 20),
-    Expanded(
-      child: Column(
-        children: [
-          _totalCustomersCard(),
-          const SizedBox(height: 20),
-          SectionCard(
-            child: StationAlertsCard(alerts: alerts),
-          ),
-        ],
-      ),
-    ),
-  ],
-);
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: SectionCard(
+                      child: StationNetworkCard(
+                        mapStations: mapStations,
+                        onStationTap: _showStationDetails,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _totalCustomersCard(),
+                        const SizedBox(height: 20),
+                        SectionCard(child: StationAlertsCard(alerts: alerts)),
+                      ],
+                    ),
+                  ),
+                ],
+              );
             },
           ),
           const SizedBox(height: 22),

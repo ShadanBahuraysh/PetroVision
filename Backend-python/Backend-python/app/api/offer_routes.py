@@ -1,3 +1,17 @@
+# ========================================================================================================
+# PetroVision Offer Routes
+# --------------------------------------------------------------------------------------------------------
+# This file contains all offer-management API endpoints
+# for the PetroVision system, including:
+# - Retrieving available offers
+# - Retrieving user-specific offers
+# - Creating, updating, and deleting offers
+# - Generating offer IDs and QR codes
+# - Managing loyalty offer details and categories
+#
+# It also handles QR-code generation for earning
+# and redeeming loyalty points within the loyalty system.
+# ========================================================================================================
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -36,8 +50,10 @@ def get_all_offers():
     try:
         result = supabase.table("offer").select("*").execute()
         return result.data or []
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/user/{user_id}")
@@ -50,8 +66,10 @@ def get_user_offers(user_id: str):
             .execute()
         )
         return result.data or []
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500,detail="Internal server error")
 
 
 @router.get("/{offer_id}")
@@ -68,8 +86,8 @@ def get_offer(offer_id: str):
         return result.data[0]
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/")
@@ -92,8 +110,10 @@ def create_offer(data: OfferRequest):
             "message": "Offer created successfully",
             "offer": result.data[0] if result.data else None
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.put("/{offer_id}")
@@ -118,8 +138,8 @@ def update_offer(offer_id: str, data: OfferRequest):
         }
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/{offer_id}")
@@ -135,8 +155,10 @@ def delete_offer(offer_id: str):
             "message": "Offer deleted successfully",
             "deleted": result.data
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
     
 
 """ 
@@ -197,5 +219,5 @@ def scan_earn_qr(qr_code: str, user_id: str, amount: float):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) """
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error") """

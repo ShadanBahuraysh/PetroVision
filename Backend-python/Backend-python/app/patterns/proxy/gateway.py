@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision Application Access Proxy
+# --------------------------------------------------------------------------------------------------------
+# This file defines the application gateway interface
+# and the AppAccessProxy class used in the Proxy
+# design pattern implementation within PetroVision.
+#
+# Features included:
+# - Defining application gateway operations
+# - Handling user authentication requests
+# - Validating user sessions and roles
+# - Controlling dashboard access permissions
+# - Restricting unauthorized access attempts
+# - Delegating approved access requests to the real gateway
+#
+# It also separates basic access-control validation
+# from the actual dashboard access functionality
+# within the system.
+# ========================================================================================================
 from abc import ABC, abstractmethod
 
 
@@ -11,7 +30,7 @@ class IApplicationGateway(ABC):
         pass
 
 
-class AppAccessProxy:
+class AppAccessProxy(IApplicationGateway):
     def __init__(self, real_gateway, auth_service):
         self._real_gateway = real_gateway
         self._auth_service = auth_service
@@ -37,6 +56,14 @@ class AppAccessProxy:
             return {
                 "allowed": False,
                 "message": "No user session"
+            }
+
+        role = str(user.get("role", "")).lower()
+
+        if role not in ["admin", "customer"]:
+            return {
+                "allowed": False,
+                "message": "Unauthorized user type"
             }
 
         return {

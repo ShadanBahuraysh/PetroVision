@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Offers Page
+// --------------------------------------------------------------------------------------------------------
+// This file defines the OffersPage used for
+// displaying available loyalty offers
+// and rewards within the PetroVision platform.
+//
+// Features included:
+// - Loading loyalty offers from backend APIs
+// - Displaying available active offers
+// - Sorting offers based on reward points
+// - Displaying loyalty earn and redeem values
+// - Navigating users to detailed offer screens
+// - Displaying offer-specific icons and reward data
+// - Managing loading and empty-offer states
+// - Providing responsive offers-list UI
+//
+// It also integrates loyalty APIs,
+// offer-management workflows,
+// and reward-navigation functionality
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:r/l10n/app_localizations.dart';
 import '../../services/loyalty_api_service.dart';
@@ -25,16 +48,34 @@ class _OffersPageState extends State<OffersPage> {
   }
 
   Future<void> _loadOffers() async {
-  final data = await LoyaltyApiService.getAllOffers();
+  List<dynamic> data = [];
+
+  try {
+    data = await LoyaltyApiService.getAllOffers();
+  } catch (_) {
+    data = [];
+  }
+
+  if (!mounted) return;
+
   setState(() {
     offers = data.where((offer) {
-  return (offer["status"] ?? "Active").toString().toLowerCase() == "active";
-}).toList();
+      return (offer["status"] ?? "Active")
+              .toString()
+              .toLowerCase() ==
+          "active";
+    }).toList();
+
     offers.sort((a, b) {
-      final aPoints = ((a["earn_points"] ?? 0) as num).toInt();
-      final bPoints = ((b["earn_points"] ?? 0) as num).toInt();
+      final aPoints =
+          ((a["earn_points"] ?? 0) as num).toInt();
+
+      final bPoints =
+          ((b["earn_points"] ?? 0) as num).toInt();
+
       return bPoints.compareTo(aPoints);
     });
+
     isLoading = false;
   });
 }

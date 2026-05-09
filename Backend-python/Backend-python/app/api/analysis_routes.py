@@ -1,3 +1,20 @@
+# ========================================================================================================
+# PetroVision Analysis Routes
+# --------------------------------------------------------------------------------------------------------
+# This file contains all analysis-related API endpoints
+# for the PetroVision system, including:
+# - Running station performance analysis
+# - Generating overview and ranking data
+# - Explaining station results
+# - Comparing stations
+# - Exporting analysis reports (CSV / Excel)
+# - Saving reports to the database
+# - Clearing cached analysis data
+#
+# It also includes helper functions for building
+# report summaries, insights, recommendations,
+# and exporting formatted analysis reports.
+# =========================================================================================================
 import csv
 import io
 from datetime import datetime
@@ -98,7 +115,7 @@ def _build_export_rows():
         status = item.get("performance_status")
         priority = item.get("priority")
         top_issue = item.get("top_issue") or "No major issue"
-        recommendation = _get_model_recommendation(station_id)
+        recommendation = item.get("recommendation") or "Review station performance and monitor operational indicators."
 
         rows.append({
             "station_id": station_id,
@@ -149,64 +166,64 @@ def _save_rows_to_report_table(rows, generated_at):
 def run_all_analysis(force: bool = False):
     try:
         return analysis_service.run_full_analysis(force=force)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/overview")
 def get_overview():
     try:
         return analysis_service.get_overview()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/ranking")
 def get_ranking():
     try:
         return analysis_service.get_ranking()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/top-bottom")
 def get_top_bottom():
     try:
         return analysis_service.get_top_bottom_10()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/station/{station_id}")
 def analyze_station(station_id: str):
     try:
         return analysis_service.get_station_analysis(station_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/explain/station/{station_id}")
 def explain_station(station_id: str):
     try:
         return explanation_service.explain_station(station_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/explain/overview")
 def explain_overview():
     try:
         return explanation_service.explain_overview()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/compare/{station_1}/{station_2}")
 def compare_stations(station_1: str, station_2: str):
     try:
         return explanation_service.compare_stations(station_1, station_2)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/export")
@@ -229,8 +246,8 @@ def export_analysis_report(save_to_db: bool = False):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/export/download")
@@ -339,8 +356,8 @@ def download_analysis_report(file_type: str = "csv"):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/export/save")
@@ -359,8 +376,8 @@ def save_analysis_report():
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/clear-cache")
@@ -372,5 +389,5 @@ def clear_cache():
             "message": "All caches cleared successfully",
             "analysis": analysis_result,
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")

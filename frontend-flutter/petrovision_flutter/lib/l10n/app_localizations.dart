@@ -709,6 +709,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'These Terms are governed by the laws of the country where PetroMin operates.'**
   String get termsSec9P1;
+
+  /// No description provided for @nearestStations.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest Stations'**
+  String get nearestStations;
+
+  /// No description provided for @openMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Maps'**
+  String get openMaps;
+
+  /// No description provided for @openThisStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this station in Google Maps?'**
+  String get openThisStation;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
 }
 
 class _AppLocalizationsDelegate

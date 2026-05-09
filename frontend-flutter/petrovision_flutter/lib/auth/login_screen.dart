@@ -1,3 +1,25 @@
+// ========================================================================================================
+// PetroVision Login Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the LoginScreen used for
+// user authentication within the PetroVision system.
+//
+// Features included:
+// - Authenticating users through backend APIs
+// - Validating login credentials and email format
+// - Supporting OTP verification workflows
+// - Supporting administrator verification workflows
+// - Handling authentication and API errors
+// - Managing loading and login states
+// - Displaying login validation feedback
+// - Navigating users based on account roles
+// - Providing responsive authentication UI components
+//
+// It also integrates login APIs, OTP verification,
+// role-based navigation, and secure-access
+// workflows within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -91,8 +113,14 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       } else {
-        final data = json.decode(response.body);
-        setState(() => _errorMessage = data['detail'] ?? 'Invalid email or password');
+        String message = 'Invalid email or password';
+
+        try {
+          final data = json.decode(response.body);
+          message = data['detail'] ?? message;
+        } catch (_) {}
+
+        setState(() => _errorMessage = message);
       }
     } catch (e) {
       setState(() => _errorMessage = 'Connection error. Try again.');

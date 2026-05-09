@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision FastAPI Application
+# --------------------------------------------------------------------------------------------------------
+# This file is the main entry point for the
+# PetroVision backend application.
+#
+# Features included:
+# - Initializing the FastAPI application
+# - Configuring CORS middleware settings
+# - Registering API route modules
+# - Connecting authentication, station,
+#   loyalty, offer, and analysis routes
+# - Providing the root API status endpoint
+#
+# It also centralizes backend API configuration
+# and manages the integration of all
+# PetroVision backend services and routes.
+# ========================================================================================================
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

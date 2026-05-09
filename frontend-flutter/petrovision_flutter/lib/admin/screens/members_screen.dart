@@ -1,3 +1,24 @@
+// ========================================================================================================
+// PetroVision Members Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the MembersScreen and related
+// UI components used for managing loyalty members
+// within the PetroVision admin dashboard.
+//
+// Features included:
+// - Loading member data from the backend
+// - Displaying loyalty-member statistics
+// - Searching and filtering members
+// - Displaying member tiers and points
+// - Displaying member activity status
+// - Supporting member deletion operations
+// - Handling API request and loading states
+// - Providing interactive dashboard UI components
+//
+// It also integrates loyalty-member management
+// and member analytics within the PetroVision
+// administrative dashboard platform.
+// ========================================================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -271,9 +292,18 @@ class _MembersScreenState extends State<MembersScreen> {
                 onPressed: () async {
                   Navigator.pop(ctx);
                   final res = await http.delete(Uri.parse('$_membersBaseUrl/auth/users/${member.id}'));
+                  if (!mounted) return;
                   if (res.statusCode == 200) {
-                    await _loadMembers();
-                  }
+                      await _loadMembers();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Member deleted successfully.')),
+                      );
+                } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to delete member.')),
+                      );
+                    }
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFEF4444),

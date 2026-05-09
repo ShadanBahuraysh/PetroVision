@@ -1,3 +1,27 @@
+// ========================================================================================================
+// PetroVision Admin Shell
+// --------------------------------------------------------------------------------------------------------
+// This file defines the AdminShell and related
+// reusable UI components used for building
+// the PetroVision admin dashboard layout.
+//
+// Features included:
+// - Building the admin dashboard shell layout
+// - Managing sidebar navigation
+// - Supporting dashboard page routing
+// - Displaying top navigation headers
+// - Supporting export-button integration
+// - Managing responsive dashboard layouts
+// - Providing reusable navigation components
+// - Handling logout and account-menu operations
+// - Supporting interactive hover effects and animations
+//
+// It also provides a centralized reusable
+// dashboard structure and navigation system
+// for administrative screens within the
+// PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import '../../auth/welcome_screen.dart';
 import 'interactive_widgets.dart';

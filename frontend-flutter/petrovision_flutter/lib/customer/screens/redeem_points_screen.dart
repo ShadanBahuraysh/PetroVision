@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Redeem Points Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the RedeemPointsScreen
+// used for displaying available redeemable rewards
+// within the PetroVision loyalty system.
+//
+// Features included:
+// - Loading customer loyalty points from APIs
+// - Loading redeemable reward offers from APIs
+// - Filtering active reward offers
+// - Displaying reward categories and filters
+// - Supporting reward-redemption workflows
+// - Navigating users to redemption confirmation screens
+// - Managing loading and reward-availability states
+// - Providing responsive rewards-list UI
+//
+// It also integrates loyalty APIs,
+// reward-filtering workflows,
+// and redemption-management functionality
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'confirm_redemption_screen.dart';
 import '../../services/loyalty_api_service.dart';
@@ -38,22 +61,39 @@ class _RedeemPointsScreenState extends State<RedeemPointsScreen> {
   }
 
   Future<void> _loadData() async {
-    final pts = await LoyaltyApiService.getPoints(widget.userId);
-    final offers = await LoyaltyApiService.getAllOffers();
+  int pts = 0;
+  List<dynamic> offers = [];
 
-    if (!mounted) return;
-
-    setState(() {
-      currentPoints = pts;
-      rewards = offers
-          .map((e) => Map<String, dynamic>.from(e))
-          .where((offer) =>
-              (offer["status"] ?? "Active").toString().toLowerCase() ==
-              "active"&&_toInt(offer["redeem_points"]) > 0)
-          .toList();
-      isLoading = false;
-    });
+  try {
+    pts = await LoyaltyApiService.getPoints(widget.userId);
+  } catch (_) {
+    pts = 0;
   }
+
+  try {
+    offers = await LoyaltyApiService.getAllOffers();
+  } catch (_) {
+    offers = [];
+  }
+
+  if (!mounted) return;
+
+  setState(() {
+    currentPoints = pts;
+
+    rewards = offers
+        .map((e) => Map<String, dynamic>.from(e))
+        .where((offer) =>
+            (offer["status"] ?? "Active")
+                    .toString()
+                    .toLowerCase() ==
+                "active" &&
+            _toInt(offer["redeem_points"]) > 0)
+        .toList();
+
+    isLoading = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {

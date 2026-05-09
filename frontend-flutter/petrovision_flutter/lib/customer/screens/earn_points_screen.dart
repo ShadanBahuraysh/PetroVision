@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Earn Points Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the EarnPointsScreen used
+// for scanning and redeeming loyalty QR codes
+// within the PetroVision customer rewards system.
+//
+// Features included:
+// - Scanning QR codes using the device camera
+// - Supporting manual QR-code entry
+// - Validating QR-code formats
+// - Sending loyalty-point requests to backend APIs
+// - Displaying earned-points feedback messages
+// - Handling invalid and duplicate QR-code usage
+// - Managing loading and redemption states
+// - Displaying responsive scanning and dialog UI
+//
+// It also integrates QR scanning workflows,
+// loyalty-point APIs,
+// and customer reward operations
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -139,10 +162,12 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
   }
 
   // Called both from camera scan AND manual entry
-  Future<void> _handleQrCode(BuildContext context, String code, Color navy, Color blue) async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
+Future<void> _handleQrCode(BuildContext context, String code, Color navy, Color blue) async {
+  if (_isLoading) return;
 
+  setState(() => _isLoading = true);
+
+  try {
     final result = await LoyaltyApiService.scanEarnQr(
       qrCode: code,
       userId: widget.userId,
@@ -150,9 +175,9 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
     );
 
     if (!mounted) return;
+
     setState(() => _isLoading = false);
 
-    // Use a fresh context from the widget tree after the async gap
     final scaffoldContext = context;
 
     if (result != null && result['error'] != true) {
@@ -204,7 +229,19 @@ class _EarnPointsScreenState extends State<EarnPointsScreen> {
         ),
       );
     }
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Connection error. Try again."),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   void _dialog(BuildContext context, Color navy, Color blue) {
     _codeController.clear();

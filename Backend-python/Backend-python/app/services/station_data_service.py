@@ -1,3 +1,24 @@
+# ========================================================================================================
+# PetroVision Station Data Service
+# --------------------------------------------------------------------------------------------------------
+# This file defines the StationDataService class
+# used for retrieving and preparing station data
+# within the PetroVision analytics system.
+#
+# Features included:
+# - Connecting to the PostgreSQL database
+# - Retrieving all station performance data
+# - Retrieving data for a specific station
+# - Cleaning and formatting station datasets
+# - Normalizing column names and station IDs
+# - Handling invalid and missing data
+# - Preparing datasets for AI analysis workflows
+#
+# It also centralizes database-access operations
+# and data preprocessing for analytics and
+# machine learning services within PetroVision.
+# ========================================================================================================
+
 import pandas as pd
 from sqlalchemy import create_engine
 from app.config import DB_CONFIG, TABLE_NAME

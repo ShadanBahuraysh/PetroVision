@@ -1,3 +1,27 @@
+// ========================================================================================================
+// PetroVision Forgot Password Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the ForgotPasswordScreen
+// used for password-reset operations within
+// the PetroVision authentication system.
+//
+// Features included:
+// - Sending password-reset OTP requests
+// - Verifying reset credentials
+// - Resetting user passwords
+// - Validating email and password inputs
+// - Handling authentication and API errors
+// - Managing loading and verification states
+// - Displaying password-reset success messages
+// - Supporting secure password-reset workflows
+// - Providing responsive authentication UI components
+//
+// It also integrates password-reset APIs,
+// OTP verification workflows, and user
+// authentication recovery operations
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -57,16 +81,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': _emailController.text.trim()}),
       );
-      if (response.statusCode == 200) {
+      if (!mounted) return;
+
+if (response.statusCode == 200) {
   setState(() => _otpConfirmed = true);
 } else {
-        final data = json.decode(response.body);
-        setState(() => _emailError = data['detail'] ?? 'Email not found');
-      }
+  String message = 'Email not found';
+
+  try {
+    final data = json.decode(response.body);
+    message = data['detail'] ?? message;
+  } catch (_) {}
+
+  setState(() => _emailError = message);
+}
     } catch (e) {
       setState(() => _emailError = 'Connection error. Try again.');
     } finally {
-      setState(() => _isLoading = false);
+       if (mounted) {
+    setState(() => _isLoading = false);
+  }
     }
   }
 
@@ -90,16 +124,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           'new_password': _newPasswordController.text,
         }),
       );
-      if (response.statusCode == 200) {
-        setState(() => _otpVerified = true);
-      } else {
-        final data = json.decode(response.body);
-        setState(() => _passwordError = data['detail'] ?? 'Reset failed');
-      }
+      if (!mounted) return;
+
+if (response.statusCode == 200) {
+  setState(() => _otpVerified = true);
+} else {
+  String message = 'Reset failed';
+
+  try {
+    final data = json.decode(response.body);
+    message = data['detail'] ?? message;
+  } catch (_) {}
+
+  setState(() => _passwordError = message);
+}
     } catch (e) {
       setState(() => _passwordError = 'Connection error. Try again.');
     } finally {
-      setState(() => _isLoading = false);
+       if (mounted) {
+    setState(() => _isLoading = false);
+  }
     }
   }
 

@@ -1,3 +1,24 @@
+# ========================================================================================================
+# PetroVision Recommendation Engine
+# --------------------------------------------------------------------------------------------------------
+# This file is responsible for generating AI-driven
+# operational recommendations and performance insights
+# for fuel stations within the PetroVision system.
+#
+# Features included:
+# - Predicting station performance scores
+# - Calculating feature contribution values (SHAP)
+# - Identifying top negative performance drivers
+# - Generating operational recommendations
+# - Building station performance summaries
+# - Producing fallback recommendation actions
+#
+# It also combines machine learning predictions,
+# feature-importance analysis, and recommendation
+# rules to provide explainable AI insights
+# for station performance optimization.
+# ========================================================================================================
+
 from typing import Any, Dict, List
 import pandas as pd
 import xgboost as xgb

@@ -1,3 +1,29 @@
+// ========================================================================================================
+// PetroVision Home Page
+// --------------------------------------------------------------------------------------------------------
+// This file defines the HomePage and HomeMainContent
+// used as the primary customer dashboard interface
+// within the PetroVision platform.
+//
+// Features included:
+// - Displaying customer dashboard and loyalty data
+// - Managing navigation between application sections
+// - Displaying nearby stations on interactive maps
+// - Loading offers and loyalty membership information
+// - Supporting QR-code earning and redemption workflows
+// - Supporting multilingual localization and language switching
+// - Displaying nearest fuel stations using geolocation services
+// - Opening external navigation applications
+// - Managing loading, API, and location states
+// - Providing responsive dashboard and drawer UI components
+//
+// It also integrates loyalty APIs,
+// map visualization workflows,
+// geolocation services,
+// station-navigation functionality,
+// and customer dashboard operations
+// within the PetroVision platform.
+// ========================================================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -18,6 +44,8 @@ import 'terms_conditions_screen.dart';
 import '../../services/loyalty_api_service.dart';
 import '../../core/language_controller.dart';
 import 'confirm_redemption_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   final String userId;
@@ -292,15 +320,123 @@ class _HomeMainContentState extends State<HomeMainContent> {
   List<Map<String, dynamic>> _mapStations = [];
   List<Map<String, dynamic>> _offers = [];
   bool _isOffersLoading = true;
-
+  Position? _userPosition;
+  Map<String, dynamic>? _nearestStation;
   @override
   void initState() {
     super.initState();
     _loadData();
-    _loadMapStations();
+    _loadMapStations().then((_) => _getUserLocation());
     _loadOffers();
   }
 
+Future<void> _getUserLocation() async {
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Please enable location services',
+      ),
+    ),
+  );
+
+  return;
+}
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Location permission is required',
+      ),
+    ),
+  );
+
+  return;
+}
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Location permission permanently denied',
+      ),
+    ),
+  );
+
+  return;
+}
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 10),
+      ),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _userPosition = position;
+      _nearestStation = _findNearestStation();
+    });
+  } catch (e) {
+    debugPrint('Location error: $e');
+  }
+}
+
+Map<String, dynamic>? _findNearestStation() {
+  if (_userPosition == null || _mapStations.isEmpty) return null;
+
+  final sortedStations = List<Map<String, dynamic>>.from(_mapStations);
+
+  sortedStations.sort((a, b) {
+    final distA = Geolocator.distanceBetween(
+      _userPosition!.latitude,
+      _userPosition!.longitude,
+      _toDouble(a['lat'], 0),
+      _toDouble(a['lng'], 0),
+    );
+
+    final distB = Geolocator.distanceBetween(
+      _userPosition!.latitude,
+      _userPosition!.longitude,
+      _toDouble(b['lat'], 0),
+      _toDouble(b['lng'], 0),
+    );
+
+    return distA.compareTo(distB);
+  });
+
+ 
+
+  return sortedStations.first;
+}
+
+Future<void> _openGoogleMaps(double lat, double lng) async {
+  final Uri googleMapsUrl = Uri.parse(
+    'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+  );
+
+  if (!await launchUrl(
+  googleMapsUrl,
+  mode: LaunchMode.externalApplication,
+)) {
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Could not open Google Maps'),
+    ),
+  );
+}
+}
   Future<void> _loadOffers() async {
   try {
     final response = await http.get(
@@ -308,7 +444,12 @@ class _HomeMainContentState extends State<HomeMainContent> {
     );
 
     if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
+      List data = [];
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {
+        data = [];
+      }
 
       if (!mounted) return;
 
@@ -365,7 +506,12 @@ class _HomeMainContentState extends State<HomeMainContent> {
     try {
       final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
       if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
+        List data = [];
+        try {
+          data = jsonDecode(response.body);
+        } catch (_) {
+          data = [];
+        }
         if (!mounted) return;
         setState(() {
           _mapStations = data.map((item) => Map<String, dynamic>.from(item)).toList();
@@ -388,16 +534,88 @@ class _HomeMainContentState extends State<HomeMainContent> {
   }
 
   List<Marker> _buildPreviewMarkers() {
-    return _mapStations.take(20).map((station) {
-      final lat = _toDouble(station['lat'], 21.5433);
-      final lng = _toDouble(station['lng'], 39.1728);
-      return Marker(
-        point: LatLng(lat, lng),
-        width: 34, height: 34,
-        child: const Icon(Icons.location_on, color: Color(0xFF4195AF), size: 32),
+
+  if (_mapStations.isEmpty) return [];
+
+  List<Map<String, dynamic>> stationsToShow =
+      List<Map<String, dynamic>>.from(_mapStations);
+
+  if (_userPosition != null) {
+
+    stationsToShow.sort((a, b) {
+
+      final distA = Geolocator.distanceBetween(
+        _userPosition!.latitude,
+        _userPosition!.longitude,
+        _toDouble(a['lat'], 0),
+        _toDouble(a['lng'], 0),
       );
-    }).toList();
+
+      final distB = Geolocator.distanceBetween(
+        _userPosition!.latitude,
+        _userPosition!.longitude,
+        _toDouble(b['lat'], 0),
+        _toDouble(b['lng'], 0),
+      );
+
+      return distA.compareTo(distB);
+    });
+
+    stationsToShow = stationsToShow.take(5).toList();
   }
+
+  return stationsToShow.map((station) {
+
+    final lat = _toDouble(station['lat'], 21.5433);
+    final lng = _toDouble(station['lng'], 39.1728);
+
+    return Marker(
+      point: LatLng(lat, lng),
+      width: 42,
+      height: 42,
+
+      child: GestureDetector(
+
+        onTap: () => _showNearestStationDialog(station),
+
+        child: const Icon(
+          Icons.location_on,
+          color: Color(0xFF4195AF),
+          size: 40,
+        ),
+      ),
+    );
+
+  }).toList();
+}
+
+void _showNearestStationDialog(Map<String, dynamic> station) {
+  final lat = _toDouble(station['lat'], 21.5433);
+  final lng = _toDouble(station['lng'], 39.1728);
+  final name = station['name']?.toString() ?? 'Station';
+  final address = station['address']?.toString() ?? '';
+  final l10n = AppLocalizations.of(context)!;
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Text(name),
+      content: Text(address.isEmpty ? l10n.openThisStation : address),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child:  Text(l10n.cancel),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            _openGoogleMaps(lat, lng);
+          },
+          child:  Text(l10n.openMaps),
+        ),
+      ],
+    ),
+  );
+}
 
   /* void _showBarcodePay(BuildContext context, String redeemCode) {
     final l10n = AppLocalizations.of(context)!;
@@ -524,67 +742,163 @@ class _HomeMainContentState extends State<HomeMainContent> {
       ),
     );
   }
+LatLng _getMapCenter() {
+  final stations = List<Map<String, dynamic>>.from(_mapStations);
+
+  if (stations.isEmpty) {
+    return const LatLng(21.5433, 39.1728);
+  }
+
+  if (_userPosition != null) {
+    stations.sort((a, b) {
+      final distA = Geolocator.distanceBetween(
+        _userPosition!.latitude,
+        _userPosition!.longitude,
+        _toDouble(a['lat'], 0),
+        _toDouble(a['lng'], 0),
+      );
+
+      final distB = Geolocator.distanceBetween(
+        _userPosition!.latitude,
+        _userPosition!.longitude,
+        _toDouble(b['lat'], 0),
+        _toDouble(b['lng'], 0),
+      );
+
+      return distA.compareTo(distB);
+    });
+  }
+
+  final nearestStations = stations.take(5).toList();
+
+  final avgLat = nearestStations
+          .map((s) => _toDouble(s['lat'], 21.5433))
+          .reduce((a, b) => a + b) /
+      nearestStations.length;
+
+  final avgLng = nearestStations
+          .map((s) => _toDouble(s['lng'], 39.1728))
+          .reduce((a, b) => a + b) /
+      nearestStations.length;
+
+  return LatLng(avgLat, avgLng);
+}
 
   Widget _buildMapCard(BuildContext context, AppLocalizations l10n) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: SizedBox(
-        height: 170,
-        width: double.infinity,
-        child: Stack(
-          children: [
-            FlutterMap(
-              options: const MapOptions(
-                initialCenter: LatLng(21.5433, 39.1728),
-                initialZoom: 5.0,
-                interactionOptions: InteractionOptions(
-                  flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.scrollWheelZoom,
-                ),
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.petrovision.app',
-                ),
-                MarkerLayer(markers: _buildPreviewMarkers()),
-              ],
-            ),
-            if (_isMapLoading)
-              Container(
-                color: Colors.white.withOpacity(0.45),
-                child: const Center(child: CircularProgressIndicator(color: Color(0xFF4195AF))),
-              ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.black.withOpacity(0.18), Colors.transparent],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 14, left: 14,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.92), borderRadius: BorderRadius.circular(14)),
-                child: Text('${_mapStations.length} Stations', style: const TextStyle(color: Color(0xFF1A2E35), fontWeight: FontWeight.w800, fontSize: 12)),
-              ),
-            ),
-            Positioned(
-              bottom: 12, right: 12,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FullMapScreen())),
-                icon: const Icon(Icons.map_rounded, size: 16),
-                label: Text(l10n.explore, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              ),
-            ),
-          ],
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(28),
+    child: SizedBox(
+      height: 210,
+      width: double.infinity,
+      child: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+  initialCenter: _userPosition == null
+      ? const LatLng(21.5433, 39.1728)
+      : LatLng(
+          _userPosition!.latitude,
+          _userPosition!.longitude,
         ),
+  initialZoom: _userPosition == null ? 9.0 : 11.3,
+  interactionOptions: const InteractionOptions(
+    flags: InteractiveFlag.drag |
+        InteractiveFlag.pinchZoom |
+        InteractiveFlag.scrollWheelZoom,
+  ),
+),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.petrovision.app',
+              ),
+              MarkerLayer(markers: _buildPreviewMarkers()),
+            ],
+          ),
+
+          if (_isMapLoading)
+            Container(
+              color: Colors.white.withOpacity(0.45),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF4195AF),
+                ),
+              ),
+            ),
+
+          IgnorePointer(
+  child: Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Colors.black.withOpacity(0.18),
+          Colors.transparent,
+        ],
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
       ),
-    );
-  }
+    ),
+  ),
+),
+
+          Positioned(
+            top: 14,
+            left: 14,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                _nearestStation == null
+                    ? '${_mapStations.length} Stations'
+                    : l10n.nearestStations,
+                style: const TextStyle(
+                  color: Color(0xFF1A2E35),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+
+          Positioned(
+            bottom: 12,
+            right: 12,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const FullMapScreen(),
+                ),
+              ),
+              icon: const Icon(Icons.map_rounded, size: 16),
+              label: Text(
+                l10n.explore,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildOfferItem(
   BuildContext context,

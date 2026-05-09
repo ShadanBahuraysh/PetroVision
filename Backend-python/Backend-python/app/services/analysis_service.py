@@ -1,3 +1,26 @@
+# ========================================================================================================
+# PetroVision Analysis Service
+# --------------------------------------------------------------------------------------------------------
+# This file defines the AnalysisService class used
+# for managing AI-based station analysis operations
+# within the PetroVision system.
+#
+# Features included:
+# - Running full station performance analysis
+# - Generating station rankings and overview summaries
+# - Running recommendation and performance models
+# - Calculating station performance metrics
+# - Identifying operational issues and recommendations
+# - Managing cached analysis results
+# - Generating top and bottom station reports
+# - Building station summaries and performance insights
+#
+# It also coordinates machine learning models,
+# recommendation engines, and station data services
+# to provide explainable AI analytics and
+# operational decision support.
+# ========================================================================================================
+
 from collections import Counter
 import pandas as pd
 
@@ -17,7 +40,7 @@ class AnalysisService:
         self.cached_overview = None
         self.cached_top_bottom = None
         self.cached_station_analyses = {}
-
+        self.is_analysis_running = False
     def _compute_station_score_metrics(self, station_df: pd.DataFrame, predictions: list):
         if not predictions:
             return {
@@ -269,6 +292,7 @@ class AnalysisService:
                 recommendation_results = recommendation_report.get("details", {}).get("results", [])
 
                 issues = self._extract_station_issue_summary(recommendation_results)
+                recommended_actions = self._extract_station_actions(recommendation_results)
                 score_metrics = self._compute_station_score_metrics(station_df, predictions)
 
                 ranking.append({
@@ -287,6 +311,7 @@ class AnalysisService:
                     "priority": self._get_priority_from_metrics(score_metrics),
                     "performance_status": self._get_performance_status(score_metrics),
                     "top_issue": issues[0]["issue"] if issues else None,
+                    "recommendation": recommended_actions[0]["action"] if recommended_actions else "Review station performance and monitor operational indicators.",
                     "n_rows": len(station_df)
                 })
 
@@ -303,112 +328,15 @@ class AnalysisService:
 
 
     def get_ranking(self):
-        if self.cached_ranking is not None:
-            return self.cached_ranking
+        if self.cached_ranking is None:
+            return []
 
-        ranking = self.analyze_all_stations_ranking()
-        self.cached_ranking = ranking
-        self.cached_top_bottom = {
-            "bottom_10": ranking[:10],
-            "top_10": ranking[-10:]
-        }
-        return ranking
+        return self.cached_ranking
 
-    def run_full_analysis(self, force: bool = False):
-        if (
-            not force and
-            self.cached_ranking is not None and
-            self.cached_overview is not None and
-            self.cached_top_bottom is not None
-        ):
-            return {
-                "message": "Full analysis already cached",
-                "cached": True
-            }
 
-        ranking = self.analyze_all_stations_ranking()
-
-        self.cached_ranking = ranking
-        self.cached_top_bottom = {
-            "bottom_10": ranking[:10],
-            "top_10": ranking[-10:]
-        }
-
-        if ranking:
-            total_stations = len(ranking)
-            overall_average_score = round(
-                sum(item["final_station_score"] for item in ranking) / total_stations, 2
-            )
-
-            best_station = max(ranking, key=lambda x: x["final_station_score"])
-            worst_station = min(ranking, key=lambda x: x["final_station_score"])
-
-            low_performance_count = sum(1 for item in ranking if item["final_station_score"] < 55)
-            high_performance_count = sum(1 for item in ranking if item["final_station_score"] >= 70)
-
-            issue_counter = Counter(item["top_issue"] for item in ranking if item.get("top_issue"))
-            common_issues = issue_counter.most_common(3)
-
-            most_common_issues = [
-                {
-                    "issue": issue,
-                    "count": count,
-                    "explanation": explain_issue(issue)
-                }
-                for issue, count in common_issues
-            ]
-
-            management_recommendations = [
-                recommend_for_issue(issue_data["issue"])
-                for issue_data in most_common_issues
-            ]
-
-            self.cached_overview = {
-                "total_stations": total_stations,
-                "overall_average_score": overall_average_score,
-                "best_station": best_station,
-                "worst_station": worst_station,
-                "low_performance_count": low_performance_count,
-                "high_performance_count": high_performance_count,
-                "most_common_issues": most_common_issues,
-                "management_recommendations": management_recommendations
-            }
-        else:
-            self.cached_overview = {
-                "total_stations": 0,
-                "overall_average_score": 0,
-                "best_station": None,
-                "worst_station": None,
-                "low_performance_count": 0,
-                "high_performance_count": 0,
-                "most_common_issues": [],
-                "management_recommendations": []
-            }
-
-        return {
-            "message": "Full analysis completed and cached successfully",
-            "cached": False
-        }
-
-    def get_top_bottom_10(self):
-        if self.cached_top_bottom is not None:
-            return self.cached_top_bottom
-
-        ranking = self.get_ranking()
-        self.cached_top_bottom = {
-            "bottom_10": ranking[:10],
-            "top_10": ranking[-10:]
-        }
-        return self.cached_top_bottom
-
-    def get_overview(self):
-        if self.cached_overview is not None:
-            return self.cached_overview
-
-        ranking = self.get_ranking()
-
+    def _build_overview_from_ranking(self, ranking: list):
         if not ranking:
-            self.cached_overview = {
+            return {
                 "total_stations": 0,
                 "overall_average_score": 0,
                 "best_station": None,
@@ -418,7 +346,6 @@ class AnalysisService:
                 "most_common_issues": [],
                 "management_recommendations": []
             }
-            return self.cached_overview
 
         total_stations = len(ranking)
         overall_average_score = round(
@@ -448,7 +375,7 @@ class AnalysisService:
             for issue_data in most_common_issues
         ]
 
-        self.cached_overview = {
+        return {
             "total_stations": total_stations,
             "overall_average_score": overall_average_score,
             "best_station": best_station,
@@ -458,6 +385,74 @@ class AnalysisService:
             "most_common_issues": most_common_issues,
             "management_recommendations": management_recommendations
         }
+
+
+    def run_full_analysis(self, force: bool = False):
+        if self.is_analysis_running:
+            return {
+                "message": "Analysis is already running",
+                "status": "running",
+                "cached": False
+            }
+
+        if (
+            not force and
+            self.cached_ranking is not None and
+            self.cached_overview is not None and
+            self.cached_top_bottom is not None
+        ):
+            return {
+                "message": "Full analysis already cached",
+                "status": "cached",
+                "cached": True
+            }
+
+        self.is_analysis_running = True
+
+        try:
+            ranking = self.analyze_all_stations_ranking()
+
+            self.cached_ranking = ranking
+            self.cached_top_bottom = {
+                "bottom_10": ranking[:10],
+                "top_10": ranking[-10:]
+            }
+
+            self.cached_overview = self._build_overview_from_ranking(ranking)
+
+            return {
+                "message": "Full analysis completed and cached successfully",
+                "status": "completed",
+                "cached": False
+            }
+
+        finally:
+            self.is_analysis_running = False
+
+
+    def get_top_bottom_10(self):
+        if self.cached_top_bottom is None:
+            return {
+            "bottom_10": [],
+            "top_10": []
+            }
+
+        return self.cached_top_bottom
+
+    def get_overview(self):
+        if self.cached_overview is None:
+            return {
+                "message": "No analysis cache available. Please run analysis first.",
+                "cached": False,
+                "total_stations": 0,
+                "overall_average_score": 0,
+                "best_station": None,
+                "worst_station": None,
+                "low_performance_count": 0,
+                "high_performance_count": 0,
+                "most_common_issues": [],
+                "management_recommendations": []
+            }
 
         return self.cached_overview
 

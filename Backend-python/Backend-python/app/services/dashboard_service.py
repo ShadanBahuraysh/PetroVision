@@ -1,3 +1,23 @@
+# ========================================================================================================
+# PetroVision Dashboard Service
+# --------------------------------------------------------------------------------------------------------
+# This file defines the DashboardService class used
+# for preparing dashboard data within the PetroVision system.
+#
+# Features included:
+# - Building customer dashboard data
+# - Building admin dashboard summaries
+# - Formatting loyalty account information
+# - Formatting membership details
+# - Formatting station information
+# - Calculating station-status statistics
+# - Handling dashboard-ready response structures
+#
+# It also centralizes dashboard-data preparation
+# for both customer and admin views within
+# the PetroVision platform.
+# ========================================================================================================
+
 class DashboardService:
     def fill_customer_dashboard(self, account, membership, stations):
         return {

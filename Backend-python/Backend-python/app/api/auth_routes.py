@@ -1,3 +1,20 @@
+# ========================================================================================================
+# PetroVision Authentication Routes
+# --------------------------------------------------------------------------------------------------------
+# This file contains all authentication and user-management
+# API endpoints for the PetroVision system, including:
+# - User login and signup
+# - OTP generation and verification
+# - Password reset and recovery
+# - Admin job number verification
+# - Dashboard access control
+# - Customer and admin management
+# - User retrieval, update, and deletion
+#
+# It also integrates the Proxy design pattern
+# to control secure access to application features
+# and dashboards based on user permissions.
+# ========================================================================================================
 from fastapi import APIRouter, HTTPException
 
 from app.services.auth_service import AuthService
@@ -40,8 +57,8 @@ def login(data: UserLogin):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/verify-otp")
@@ -59,8 +76,9 @@ def verify_otp(data: VerifyOtpRequest):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
     
 
 @router.post("/resend-otp")
@@ -72,9 +90,12 @@ def resend_otp(data: ResendOtpRequest):
             "message": "OTP resent successfully",
             "requires_otp": True
         }
+    
+    except HTTPException:
+        raise
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/verify-admin-job")
@@ -92,8 +113,8 @@ def verify_admin_job(data: AdminJobRequest):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/signup")
@@ -120,8 +141,8 @@ def signup(data: UserCreate):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/forgot-password")
@@ -139,8 +160,8 @@ def forgot_password(data: ForgotPasswordRequest):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception :
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/reset-password")
@@ -161,8 +182,8 @@ def reset_password(data: ResetPasswordRequest):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 
@@ -202,8 +223,8 @@ def get_all_users():
 
         return members
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/users/{user_id}")
@@ -211,8 +232,12 @@ def delete_user(user_id: str):
     try:
         supabase.table("users").delete().eq("user_id", user_id).execute()
         return {"message": "User deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/dashboard/{user_id}")
@@ -229,8 +254,8 @@ def access_dashboard(user_id: str):
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
     
 
 @router.get("/admins")
@@ -263,9 +288,12 @@ def get_all_admins():
             })
 
         return result
+    
+    except HTTPException:
+        raise
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
     
 
 
@@ -292,8 +320,11 @@ def add_admin(data: UserCreate):
             "admin": user
         }
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
     
 
 
@@ -326,7 +357,8 @@ def update_admin(user_id: str, data: dict):
             "user": user_result.data,
             "admin": admin_result.data
         }
+    except HTTPException:
+        raise
 
-    except Exception as e:
-        print("UPDATE ADMIN ERROR:", repr(e))
-        raise HTTPException(status_code=500, detail=repr(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")

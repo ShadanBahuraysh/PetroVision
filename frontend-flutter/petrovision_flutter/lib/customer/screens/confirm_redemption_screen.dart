@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Confirm Redemption Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the ConfirmRedemptionScreen
+// used for confirming loyalty reward redemptions
+// within the PetroVision customer rewards system.
+//
+// Features included:
+// - Confirming loyalty reward redemption requests
+// - Sending redemption requests to backend APIs
+// - Displaying redemption QR/barcode information
+// - Displaying reward and remaining-points details
+// - Handling redemption loading and error states
+// - Displaying redemption success and failure feedback
+// - Navigating users to redemption success workflows
+// - Providing responsive redemption UI components
+//
+// It also integrates loyalty redemption APIs,
+// reward-confirmation workflows,
+// and QR redemption functionality
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import '../../services/loyalty_api_service.dart';
 import 'redemption_success_screen.dart';
@@ -29,22 +52,35 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
   Future<void> _confirmRedeem(BuildContext context) async {
     setState(() => _isLoading = true);
 
-    final result = await LoyaltyApiService.redeemPoints(
-      userId: widget.userId,
-      points: widget.pointsCost,
-      offerId: widget.offerId,
-    );
+    try {
+      final result = await LoyaltyApiService.redeemPoints(
+        userId: widget.userId,
+        points: widget.pointsCost,
+        offerId: widget.offerId,
+      );
 
-    setState(() => _isLoading = false);
+      if (!mounted) return;
 
-    if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    if (result != null) {
-      _showBarcode(context, result["redeem_qr_code"] ?? "NO CODE");
-    } else {
+      if (result != null) {
+        _showBarcode(context, result["redeem_qr_code"] ?? "NO CODE");
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("❌ Something went wrong, try again"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("❌ Something went wrong, try again"),
+          content: Text("Connection error. Try again."),
           backgroundColor: Colors.red,
         ),
       );
@@ -163,7 +199,6 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ النقاط المتبقية الحقيقية
     final remainingPoints = widget.currentPoints - widget.pointsCost;
 
     return Scaffold(
@@ -236,7 +271,6 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
                 width: 220,
                 height: 55,
                 child: ElevatedButton(
-                  // ✅ يتصل بالـ API أولاً
                   onPressed: _isLoading ? null : () => _confirmRedeem(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A2E35),

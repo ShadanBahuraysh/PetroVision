@@ -1,3 +1,25 @@
+// ========================================================================================================
+// PetroVision Full Map Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the FullMapScreen used for
+// displaying all PetroVision fuel stations
+// on an interactive full-screen map interface.
+//
+// Features included:
+// - Loading station data from backend APIs
+// - Displaying fuel stations on an interactive map
+// - Displaying station markers and location details
+// - Handling station coordinate conversion and validation
+// - Displaying station information dialogs
+// - Managing loading and API request states
+// - Supporting interactive map navigation
+// - Providing responsive map UI components
+//
+// It also integrates station-location APIs,
+// interactive map visualization,
+// and station-information workflows
+// within the PetroVision platform.
+// ========================================================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -22,23 +44,34 @@ class _FullMapScreenState extends State<FullMapScreen> {
   }
 
   Future<void> _loadStations() async {
-    try {
-      final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
+  try {
+    final response = await http.get(
+      Uri.parse('http://localhost:8000/stations-db'),
+    );
 
-      if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
+    if (!mounted) return;
 
-        setState(() {
-          _stations = data.map((item) => Map<String, dynamic>.from(item)).toList();
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
+    if (response.statusCode == 200) {
+      List data = [];
+
+      try {
+        data = json.decode(response.body);
+      } catch (_) {
+        data = [];
       }
-    } catch (e) {
+
+      setState(() {
+        _stations = data.map((item) => Map<String, dynamic>.from(item)).toList();
+        _isLoading = false;
+      });
+    } else {
       setState(() => _isLoading = false);
     }
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => _isLoading = false);
   }
+}
 
   double _toDouble(dynamic value, double fallback) {
     if (value == null) return fallback;

@@ -1,3 +1,24 @@
+# ========================================================================================================
+# PetroVision Backend Configuration
+# --------------------------------------------------------------------------------------------------------
+# This file defines the backend configuration
+# and environment-variable loading
+# for the PetroVision platform.
+#
+# Features included:
+# - Loading environment variables from .env files
+# - Configuring PostgreSQL database connection settings
+# - Defining ML-model database table names
+# - Managing database connection parameters
+# - Validating required backend environment variables
+# - Providing centralized backend configuration management
+#
+# It also supports backend database integration,
+# machine-learning data access,
+# and environment configuration workflows
+# within the PetroVision platform.
+# ========================================================================================================
+
 from dotenv import load_dotenv
 import os
 
@@ -26,4 +47,4 @@ TABLE_NAME = os.getenv("DB_TABLE_NAME", "historical_station_metrics")
 def validate_config():
     missing = [k for k, v in DB_CONFIG.items() if v is None]
     if missing:
-        raise ValueError(f"Missing environment variables: {missing}")
+        raise ValueError(f"Missing environment variables: {missing}") 

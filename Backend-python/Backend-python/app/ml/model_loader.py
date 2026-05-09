@@ -1,3 +1,21 @@
+# ========================================================================================================
+# PetroVision Model Loader
+# --------------------------------------------------------------------------------------------------------
+# This file is responsible for loading and managing
+# machine learning models and analysis resources
+# used by the PetroVision AI system.
+#
+# Features included:
+# - Loading trained XGBoost performance models
+# - Loading model feature columns
+# - Loading global feature importance drivers
+# - Loading recommendation rules from JSON files
+# - Caching loaded resources for reuse
+#
+# It also centralizes access to AI model assets
+# and prevents repeated loading operations
+# during runtime.
+# ========================================================================================================
 from pathlib import Path
 import json
 import xgboost as xgb

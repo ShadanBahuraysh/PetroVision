@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision Loyalty Schemas
+# --------------------------------------------------------------------------------------------------------
+# This file defines the Pydantic request and response
+# schemas used within the PetroVision loyalty system.
+#
+# Features included:
+# - Defining loyalty-related API response models
+# - Defining request validation schemas
+# - Managing loyalty account data structures
+# - Managing membership, offer, and transaction schemas
+# - Supporting earn and redeem point operations
+# - Providing type validation for API communication
+#
+# It also ensures consistent data formatting
+# and request validation between the backend
+# services and frontend applications.
+# ========================================================================================================
+
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime

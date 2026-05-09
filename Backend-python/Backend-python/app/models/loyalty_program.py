@@ -1,3 +1,20 @@
+# ========================================================================================================
+# PetroVision Loyalty Program Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the LoyaltyProgram class used
+# within the PetroVision loyalty system.
+#
+# Features included:
+# - Managing loyalty program information
+# - Storing loyalty program details and status
+# - Checking whether a loyalty program is active
+# - Defining points earned per visit
+# - Converting loyalty program objects into dictionaries
+#
+# It also provides the core structure for handling
+# customer reward programs and loyalty configurations
+# within the PetroVision platform.
+# ========================================================================================================
 class LoyaltyProgram:
     def __init__(
         self,

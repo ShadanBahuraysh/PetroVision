@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision User Schemas
+# --------------------------------------------------------------------------------------------------------
+# This file defines the Pydantic request and response
+# schemas used for authentication and user-management
+# operations within the PetroVision system.
+#
+# Features included:
+# - Defining user registration and login schemas
+# - Managing user response structures
+# - Supporting OTP verification requests
+# - Supporting password reset operations
+# - Supporting admin job-number verification
+# - Providing request and response validation
+#
+# It also ensures consistent user-data formatting
+# and validation between backend authentication
+# services and frontend applications.
+# ========================================================================================================
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 

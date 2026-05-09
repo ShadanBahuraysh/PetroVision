@@ -1,3 +1,22 @@
+# ========================================================================================================
+# PetroVision Offer Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the Offer class used
+# within the PetroVision loyalty system.
+#
+# Features included:
+# - Managing loyalty and promotional offers
+# - Storing offer details and discount information
+# - Managing offer activation status
+# - Activating and deactivating offers
+# - Linking offers to stations and users
+# - Converting offer objects into dictionaries
+#
+# It also provides the core structure for handling
+# customer rewards, discounts, and promotional
+# campaigns within the PetroVision platform.
+# ========================================================================================================
+
 class Offer:
     def __init__(
         self,

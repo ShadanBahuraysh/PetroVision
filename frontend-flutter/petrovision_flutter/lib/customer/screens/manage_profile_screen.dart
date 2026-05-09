@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision Manage Profile Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the ManageProfileScreen
+// used for displaying and managing customer
+// profile information within the PetroVision platform.
+//
+// Features included:
+// - Displaying customer profile information
+// - Displaying personal and account information
+// - Supporting profile-edit workflows
+// - Supporting password-update workflows
+// - Displaying profile-management dialogs
+// - Supporting multilingual localization content
+// - Providing reusable profile and action widgets
+// - Providing responsive profile-management UI
+//
+// It also integrates customer profile workflows,
+// account-management features,
+// and profile-editing interfaces
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:r/l10n/app_localizations.dart';
 
@@ -308,6 +331,7 @@ class _ManageProfileScreenState extends State<ManageProfileScreen> {
   Widget _buildTextField(String label, IconData icon,
       {bool obscure = false}) {
     return TextField(
+      textInputAction: TextInputAction.next,
       obscureText: obscure,
       decoration: InputDecoration(
         labelText: label,

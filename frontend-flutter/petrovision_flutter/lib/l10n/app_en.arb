@@ -19,7 +19,7 @@
   "drawerTermsConditions": "Terms & Conditions",
   "drawerLogout": "Logout",
   "drawerLanguage": "Language",
-
+  
   "helloUser": "Hello, {name}",
   "@helloUser": {
     "placeholders": {
@@ -138,5 +138,10 @@
   "termsSec8P1": "PetroVision may update these Terms and Conditions at any time.",
   "termsSec8P2": "Continued use of the app after changes constitutes acceptance of the updated terms.",
   "termsSec9Title": "9. Governing Law",
-  "termsSec9P1": "These Terms are governed by the laws of the country where PetroMin operates."
+  "termsSec9P1": "These Terms are governed by the laws of the country where PetroMin operates.",
+  "nearestStations": "Nearest Stations",
+  "openMaps": "Open Maps" ,
+  "openThisStation": "Open this station in Google Maps?",
+  "cancel": "Cancel"
+  
 }

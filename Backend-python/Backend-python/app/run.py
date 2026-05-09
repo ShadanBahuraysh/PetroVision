@@ -1,4 +1,4 @@
-import os
+""" import os
 import sys
 # Test file (we can remove it)
 
@@ -50,4 +50,4 @@ def start_app():
     print("\n" + "="*45)
 
 if __name__ == "__main__":
-    start_app()
+    start_app() """

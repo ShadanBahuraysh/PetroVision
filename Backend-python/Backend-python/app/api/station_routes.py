@@ -1,3 +1,21 @@
+# ========================================================================================================
+# PetroVision Google Maps Routes
+# --------------------------------------------------------------------------------------------------------
+# This file contains API endpoints for retrieving
+# fuel station location data using the Google Maps
+# Places API.
+#
+# Features included:
+# - Searching for fuel stations
+# - Retrieving station coordinates and addresses
+# - Formatting Google Maps response data
+# - Handling Google API request errors
+# - Returning station information for map integration
+#
+# It also validates Google API responses and converts
+# external map data into a structured format used
+# within the PetroVision system.
+# ========================================================================================================
 from fastapi import APIRouter, HTTPException
 import os
 import requests
@@ -63,5 +81,5 @@ def get_stations(query: str = "Petromin station Saudi Arabia"):
         raise
     except requests.RequestException as e:
         raise HTTPException(status_code=502, detail=f"Google Maps request failed: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")

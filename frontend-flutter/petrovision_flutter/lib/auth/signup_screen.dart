@@ -1,3 +1,27 @@
+// ========================================================================================================
+// PetroVision Signup Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the SignupScreen used for
+// customer account registration within the
+// PetroVision authentication system.
+//
+// Features included:
+// - Registering new customer accounts
+// - Validating user registration inputs
+// - Validating password security requirements
+// - Supporting OTP verification workflows
+// - Automatically authenticating users after signup
+// - Handling authentication and API errors
+// - Managing loading and signup states
+// - Displaying validation and password-feedback messages
+// - Providing responsive authentication UI components
+//
+// It also integrates signup APIs, OTP verification,
+// secure password-validation workflows,
+// and user-registration operations
+// within the PetroVision platform.
+// ========================================================================================================
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -108,10 +132,18 @@ class _SignupScreenState extends State<SignupScreen> {
       );
 
 if (signupResponse.statusCode == 200) {
-  final signupData = json.decode(signupResponse.body);
+  Map<String, dynamic> signupData = {};
+
+  try {
+    signupData = json.decode(signupResponse.body);
+  } catch (_) {
+    setState(() => _emailError = 'Signup completed, but response was invalid');
+    return;
+  }
+
   final user = signupData['user'];
 
-  await http.post(
+  final loginResponse = await http.post(
     Uri.parse('http://localhost:8000/auth/login'),
     headers: {'Content-Type': 'application/json'},
     body: json.encode({
@@ -121,6 +153,11 @@ if (signupResponse.statusCode == 200) {
   );
 
   if (!mounted) return;
+
+  if (loginResponse.statusCode != 200) {
+    setState(() => _emailError = 'Login failed after signup');
+    return;
+  }
 
   Navigator.push(
     context,
@@ -143,14 +180,22 @@ if (signupResponse.statusCode == 200) {
     ),
   );
 } else {
-        final data = json.decode(signupResponse.body);
-        setState(() => _emailError = data['detail'] ?? 'Signup failed');
+        String message = 'Signup failed';
+
+        try {
+          final data = json.decode(signupResponse.body);
+          message = data['detail'] ?? message;
+        } catch (_) {}
+
+        setState(() => _emailError = message);
       }
     } catch (e) {
       setState(() => _emailError = 'Connection error. Try again.');
     } finally {
-      setState(() => _isLoading = false);
-    }
+if (mounted) {
+    setState(() => _isLoading = false);
+  }
+      }
   }
 
   @override

@@ -1,3 +1,23 @@
+# ========================================================================================================
+# PetroVision Prediction Service
+# --------------------------------------------------------------------------------------------------------
+# This file is responsible for preparing station
+# performance data and generating AI predictions
+# using the trained PetroVision XGBoost model.
+#
+# Features included:
+# - Data preprocessing and feature preparation
+# - Cleaning and formatting input datasets
+# - Handling missing and invalid values
+# - Encoding categorical features
+# - Aligning input features with trained model features
+# - Generating station performance predictions
+#
+# It also ensures compatibility between incoming
+# station data and the trained machine learning model
+# before performing prediction operations.
+# ========================================================================================================
+
 import pandas as pd
 import xgboost as xgb
 from app.ml.model_loader import ModelLoader

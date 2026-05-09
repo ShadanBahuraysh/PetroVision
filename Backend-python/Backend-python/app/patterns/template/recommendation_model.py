@@ -1,3 +1,23 @@
+# ========================================================================================================
+# PetroVision Recommendation Model
+# --------------------------------------------------------------------------------------------------------
+# This file defines the RecommendationModel class used
+# in the Template Method design pattern implementation
+# within the PetroVision analytics system.
+#
+# Features included:
+# - Running AI-driven recommendation analysis
+# - Processing station recommendation data
+# - Generating recommendation reports
+# - Aggregating station analysis results
+# - Removing duplicate recommendations
+# - Formatting recommendation outputs
+#
+# It also implements the analytics workflow defined
+# by the Template base class to provide
+# operational recommendations and explainable
+# AI insights for station performance improvement.
+# ========================================================================================================
 from typing import Any, Dict, List
 
 from app.patterns.template.template import Template

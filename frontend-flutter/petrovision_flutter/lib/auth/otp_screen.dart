@@ -1,3 +1,26 @@
+// ========================================================================================================
+// PetroVision OTP Verification Screen
+// --------------------------------------------------------------------------------------------------------
+// This file defines the OtpScreen and related
+// OTP verification components used within
+// the PetroVision authentication system.
+//
+// Features included:
+// - Verifying OTP authentication codes
+// - Resending verification codes
+// - Managing OTP countdown timers
+// - Handling OTP validation and verification errors
+// - Supporting secure authentication workflows
+// - Managing loading and verification states
+// - Supporting automatic OTP verification
+// - Displaying verification feedback messages
+// - Providing responsive OTP input UI components
+//
+// It also integrates OTP verification APIs,
+// authentication-security workflows,
+// and verification-state management
+// within the PetroVision platform.
+// ========================================================================================================
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -6,7 +29,7 @@ import 'package:http/http.dart' as http;
 
 class OtpScreen extends StatefulWidget {
   final String email;
-  final VoidCallback onVerified; // callback — caller decides where to go
+  final VoidCallback onVerified; 
 
   const OtpScreen({
     super.key,
@@ -23,7 +46,6 @@ class _OtpScreenState extends State<OtpScreen> {
   static const Color accentBlue  = Color(0xFF4195AF);
   static const Color scaffoldBg  = Color(0xFFFBFBFB);
 
-  // 6 individual OTP boxes
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes =
@@ -56,7 +78,8 @@ class _OtpScreenState extends State<OtpScreen> {
       if (_secondsLeft == 0) {
         t.cancel();
       } else {
-        setState(() => _secondsLeft--);
+         if (!mounted) return;
+         setState(() => _secondsLeft--);
       }
     });
   }
@@ -140,7 +163,8 @@ class _OtpScreenState extends State<OtpScreen> {
 
   setState(() => _isResending = true);
 
-  await http.post(
+  try {
+  final response = await http.post(
     Uri.parse('$_baseUrl/auth/resend-otp'),
     headers: {'Content-Type': 'application/json'},
     body: json.encode({
@@ -150,7 +174,24 @@ class _OtpScreenState extends State<OtpScreen> {
 
   if (!mounted) return;
 
+  if (response.statusCode != 200) {
+    setState(() => _isResending = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to resend code')),
+    );
+    return;
+  }
+} catch (e) {
+  if (!mounted) return;
+
   setState(() => _isResending = false);
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Connection error. Try again.')),
+  );
+  return;
+}
+
+setState(() => _isResending = false);
 
   _startTimer();
 
