@@ -42,3 +42,9 @@ class Template(ABC):
     @abstractmethod
     def postprocess(self, processed_result: Any) -> Report:
         pass
+
+
+
+
+
+    

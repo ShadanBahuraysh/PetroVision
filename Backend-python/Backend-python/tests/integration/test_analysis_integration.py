@@ -7,34 +7,6 @@ sys.modules["app.supabase_client"] = MagicMock(supabase=mock_supabase)
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-class _FakeAnalysisService:
-    def run_full_analysis(self, force=False):
-        return {}
-    def get_overview(self):
-        return {}
-    def get_ranking(self):
-        return []
-    def get_top_bottom_10(self):
-        return {}
-    def get_station_analysis(self, station_id):
-        return {}
-    def clear_cache(self):
-        return {}
-
-class _FakeExplanationService:
-    def explain_overview(self):
-        return {}
-    def compare_stations(self, station_1, station_2):
-        return {}
-    def explain_station(self, station_id):
-        return {}
-    def clear_explanation_cache(self):
-        return {}
-
-sys.modules["app.services.analysis_service"] = MagicMock(AnalysisService=_FakeAnalysisService)
-sys.modules["app.services.explanation_service"] = MagicMock(ExplanationService=_FakeExplanationService)
-
 from app.api import analysis_routes
 
 app = FastAPI()
