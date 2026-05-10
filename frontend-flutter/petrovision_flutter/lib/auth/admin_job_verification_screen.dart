@@ -65,7 +65,7 @@ class _AdminJobVerificationScreenState
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8000/auth/verify-admin-job'),
+        Uri.parse('http://10.0.2.2:8000/auth/verify-admin-job'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': widget.userId, 'job_number': jobNumber}),
       );

@@ -57,8 +57,30 @@ def login(data: UserLogin):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
 
 
 @router.post("/verify-otp")
@@ -77,8 +99,30 @@ def verify_otp(data: VerifyOtpRequest):
     except HTTPException:
         raise
 
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
     
 
 @router.post("/resend-otp")
@@ -94,8 +138,30 @@ def resend_otp(data: ResendOtpRequest):
     except HTTPException:
         raise
 
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
 
 
 @router.post("/verify-admin-job")
@@ -113,8 +179,30 @@ def verify_admin_job(data: AdminJobRequest):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
 
 
 @router.post("/signup")
@@ -141,8 +229,30 @@ def signup(data: UserCreate):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
 
 
 @router.post("/forgot-password")
@@ -160,8 +270,18 @@ def forgot_password(data: ForgotPasswordRequest):
 
     except HTTPException:
         raise
-    except Exception :
-        raise HTTPException(status_code=500, detail="Internal server error")
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid authentication input: {str(e)}")
+
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=f"Missing required authentication field: {str(e)}")
+
+    except TypeError:
+        raise HTTPException(status_code=500, detail="Invalid authentication request format")
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected authentication service error")
 
 
 @router.post("/reset-password")
@@ -182,8 +302,30 @@ def reset_password(data: ResetPasswordRequest):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
 
 
 
@@ -223,8 +365,30 @@ def get_all_users():
 
         return members
 
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
 
 
 @router.delete("/users/{user_id}")
@@ -236,8 +400,30 @@ def delete_user(user_id: str):
     except HTTPException:
         raise
 
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
 
 
 @router.get("/dashboard/{user_id}")
@@ -254,8 +440,30 @@ def access_dashboard(user_id: str):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
     
 
 @router.get("/admins")
@@ -292,8 +500,30 @@ def get_all_admins():
     except HTTPException:
         raise
 
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
     
 
 
@@ -323,8 +553,30 @@ def add_admin(data: UserCreate):
     except HTTPException:
         raise
 
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid authentication input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required authentication field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected authentication service error"
+        )
     
 
 
@@ -360,5 +612,14 @@ def update_admin(user_id: str, data: dict):
     except HTTPException:
         raise
 
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid authentication input: {str(e)}")
+
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=f"Missing required authentication field: {str(e)}")
+
+    except TypeError:
+        raise HTTPException(status_code=500, detail="Invalid authentication request format")
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Unexpected authentication service error")

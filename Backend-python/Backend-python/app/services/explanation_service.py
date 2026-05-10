@@ -80,8 +80,17 @@ class ExplanationService:
 
             return content
 
+        except requests.Timeout:
+            return self._fallback_text("The AI explanation request timed out")
+
+        except requests.RequestException:
+            return self._fallback_text("Failed to connect to the AI explanation service")
+
+        except (KeyError, ValueError, TypeError):
+            return self._fallback_text("Invalid AI explanation response format")
+
         except Exception:
-            return self._fallback_text("Timeout or connection error")
+            return self._fallback_text("Unexpected AI explanation service error")
 
     def _fallback_text(self, reason: str = "") -> str:
         return "Explanation generated locally because the AI service is temporarily unavailable."

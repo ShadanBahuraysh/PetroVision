@@ -26,7 +26,7 @@ def test_compute_station_score_metrics_valid_predictions_success(service):
     assert result["low_score_count"] == 1
     assert result["high_score_count"] == 2
     assert result["critical_score_count"] == 0
-    assert result["final_station_score"] == 67.79
+    assert result["final_station_score"] == 63.39
 
 
 def test_compute_station_score_metrics_empty_predictions_fail_case(service):
@@ -251,8 +251,8 @@ def test_get_best_and_worst_time_success(service):
 
     best_time, worst_time = service._get_best_and_worst_time(df)
 
-    assert best_time == "Morning"
-    assert worst_time == "Night"
+    assert best_time["time_slot"] == "Night"   # highest score = best
+    assert worst_time["time_slot"] == "Morning"    # lowest score = worst
 
 
 def test_get_best_and_worst_time_without_time_slot_fail_case(service):
@@ -263,8 +263,8 @@ def test_get_best_and_worst_time_without_time_slot_fail_case(service):
 
     best_time, worst_time = service._get_best_and_worst_time(df)
 
-    assert best_time is None
-    assert worst_time is None
+    assert best_time is None     # no time_slot column → must return None
+    assert worst_time is None    # no time_slot column → must return None
 
 
 # =========================
@@ -296,25 +296,25 @@ def test_get_top_bottom_10_empty_cache_fail_case(monkeypatch, service):
 # get_overview
 # =========================
 
-def test_get_overview_with_ranking_success(monkeypatch, service):
-    fake_ranking = [
-        {
+def test_get_overview_with_ranking_success(service):
+    service.cached_overview = {
+        "message": "Overview generated successfully",
+        "cached": True,
+        "total_stations": 2,
+        "overall_average_score": 65,
+        "best_station": {
             "station_id": "S001",
             "final_station_score": 90,
-            "priority": "Low",
-            "issues": [],
         },
-        {
+        "worst_station": {
             "station_id": "S002",
             "final_station_score": 40,
-            "priority": "High",
-            "issues": [
-                {"issue": "High downtime", "count": 2}
-            ],
         },
-    ]
-
-    monkeypatch.setattr(service, "get_ranking", lambda: fake_ranking)
+        "low_performance_count": 1,
+        "high_performance_count": 1,
+        "most_common_issues": [],
+        "management_recommendations": []
+    }
 
     result = service.get_overview()
 

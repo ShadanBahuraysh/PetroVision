@@ -52,8 +52,30 @@ def get_all_offers():
         return result.data or []
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid offer input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required offer field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid offer data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected offer service error"
+        )
 
 
 @router.get("/user/{user_id}")
@@ -68,8 +90,18 @@ def get_user_offers(user_id: str):
         return result.data or []
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid offer input: {str(e)}")
+
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=f"Missing required offer field: {str(e)}")
+
+    except TypeError:
+        raise HTTPException(status_code=500, detail="Invalid offer data format")
+
     except Exception:
-        raise HTTPException(status_code=500,detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Unexpected offer service error")
 
 
 @router.get("/{offer_id}")
@@ -86,8 +118,30 @@ def get_offer(offer_id: str):
         return result.data[0]
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid offer input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required offer field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid offer data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected offer service error"
+        )
 
 
 @router.post("/")
@@ -112,8 +166,30 @@ def create_offer(data: OfferRequest):
         }
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid offer input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required offer field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid offer data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected offer service error"
+        )
 
 
 @router.put("/{offer_id}")
@@ -138,8 +214,30 @@ def update_offer(offer_id: str, data: OfferRequest):
         }
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid offer input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required offer field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid offer data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected offer service error"
+        )
 
 
 @router.delete("/{offer_id}")
@@ -157,8 +255,30 @@ def delete_offer(offer_id: str):
         }
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid offer input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required offer field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid offer data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected offer service error"
+        )
     
 
 """ 

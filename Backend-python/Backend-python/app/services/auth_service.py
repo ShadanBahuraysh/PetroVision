@@ -106,8 +106,20 @@ PetroVision Team
         try:
             self.send_otp_email(email, code)
             print("OTP email sent successfully")
-        except Exception as e:
-            print("Email sending failed:", e)
+        except smtplib.SMTPAuthenticationError:
+            raise Exception("Email authentication failed while sending OTP")
+
+        except smtplib.SMTPException:
+            raise Exception("SMTP service error occurred while sending email")
+
+        except OSError:
+            raise Exception("Network error occurred while sending email")
+
+        except (ValueError, TypeError):
+            raise Exception("Invalid authentication or email data")
+
+        except Exception:
+            print("Email sending failed (unexpected error)")
             print(f"OTP for {email}: {code}")
 
         return {
@@ -171,8 +183,20 @@ PetroVision Team
         try:
             self.send_otp_email(email, code)
             print("Password reset OTP sent successfully")
-        except Exception as e:
-            print("Email sending failed:", e)
+        except smtplib.SMTPAuthenticationError:
+            raise Exception("Email authentication failed while sending OTP")
+
+        except smtplib.SMTPException:
+            raise Exception("SMTP service error occurred while sending email")
+
+        except OSError:
+            raise Exception("Network error occurred while sending email")
+
+        except (ValueError, TypeError):
+            raise Exception("Invalid authentication or email data")
+
+        except Exception:
+            print("Email sending failed (unexpected error)")
             print(f"Reset OTP for {email}: {code}")
 
         return True
@@ -352,6 +376,12 @@ PetroVision Team
                 try:
                     number = int(user_id.split("-")[1])
                     max_number = max(max_number, number)
+                except ValueError:
+                    continue
+
+                except IndexError:
+                    continue
+
                 except Exception:
                     continue
 
@@ -371,5 +401,11 @@ PetroVision Team
                     plain_password.encode("utf-8"),
                     hashed_password.encode("utf-8")
                 )
+            except ValueError:
+                return False
+
+            except TypeError:
+                return False
+
             except Exception:
                 return False

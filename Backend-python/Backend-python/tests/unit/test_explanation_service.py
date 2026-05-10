@@ -63,7 +63,7 @@ def test_compact_station_data_missing_fields(service):
     result = service._compact_station_data(sample_data)
 
     assert result["station_id"] is None
-    assert result["score"] == 0
+    assert result["score"] is None
     assert result["priority"] is None
     assert result["best_time"] is None
     assert result["worst_time"] is None
@@ -105,12 +105,12 @@ def test_compact_overview_data_missing_fields(service):
 
     result = service._compact_overview_data(sample_data)
 
-    assert result["total_stations"] == 0
-    assert result["overall_average_score"] == 0
+    assert result["total_stations"] is None
+    assert result["overall_average_score"] is None
     assert result["best_station_id"] is None
     assert result["worst_station_id"] is None
-    assert result["low_performance_count"] == 0
-    assert result["high_performance_count"] == 0
+    assert result["low_performance_count"] is None
+    assert result["high_performance_count"] is None
     assert result["most_common_issues"] == []
 
 

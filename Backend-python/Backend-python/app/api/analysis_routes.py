@@ -49,6 +49,14 @@ def _get_model_recommendation(station_id: str) -> str:
 
         return fallback
 
+    except KeyError as action_error:
+        print(f"Could not load recommendation for {station_id}: {action_error}")
+        return fallback
+
+    except ValueError as action_error:
+        print(f"Could not load recommendation for {station_id}: {action_error}")
+        return fallback
+
     except Exception as action_error:
         print(f"Could not load recommendation for {station_id}: {action_error}")
         return fallback
@@ -166,64 +174,240 @@ def _save_rows_to_report_table(rows, generated_at):
 def run_all_analysis(force: bool = False):
     try:
         return analysis_service.run_full_analysis(force=force)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/overview")
 def get_overview():
     try:
         return analysis_service.get_overview()
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/ranking")
 def get_ranking():
     try:
         return analysis_service.get_ranking()
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/top-bottom")
 def get_top_bottom():
     try:
         return analysis_service.get_top_bottom_10()
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/station/{station_id}")
 def analyze_station(station_id: str):
     try:
         return analysis_service.get_station_analysis(station_id)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/explain/station/{station_id}")
 def explain_station(station_id: str):
     try:
         return explanation_service.explain_station(station_id)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/explain/overview")
 def explain_overview():
     try:
         return explanation_service.explain_overview()
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/compare/{station_1}/{station_2}")
 def compare_stations(station_1: str, station_2: str):
     try:
         return explanation_service.compare_stations(station_1, station_2)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/export")
@@ -246,8 +430,30 @@ def export_analysis_report(save_to_db: bool = False):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/export/download")
@@ -356,8 +562,30 @@ def download_analysis_report(file_type: str = "csv"):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.post("/export/save")
@@ -376,8 +604,30 @@ def save_analysis_report():
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid analysis input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required analysis field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid analysis data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected analysis service error"
+        )
 
 
 @router.get("/clear-cache")
@@ -389,5 +639,14 @@ def clear_cache():
             "message": "All caches cleared successfully",
             "analysis": analysis_result,
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid analysis input: {str(e)}")
+
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=f"Missing required analysis field: {str(e)}")
+
+    except TypeError:
+        raise HTTPException(status_code=500, detail="Invalid analysis data format")
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Unexpected error occurred while processing analysis request")

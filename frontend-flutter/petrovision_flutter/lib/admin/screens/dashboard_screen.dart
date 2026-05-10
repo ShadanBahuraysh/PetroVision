@@ -42,7 +42,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'http://10.0.2.2:8000';
 
   static const Color navy = Color(0xFF1A2E35);
   static const Color accent = Color(0xFF4195AF);

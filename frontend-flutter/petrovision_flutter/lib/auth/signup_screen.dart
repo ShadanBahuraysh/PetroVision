@@ -119,7 +119,7 @@ class _SignupScreenState extends State<SignupScreen> {
       final lname = nameParts.length > 1 ? nameParts.last : '';
 
       final signupResponse = await http.post(
-        Uri.parse('http://localhost:8000/auth/signup'),
+        Uri.parse('http://10.0.2.2:8000/auth/signup'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'fname': fname,
@@ -144,7 +144,7 @@ if (signupResponse.statusCode == 200) {
   final user = signupData['user'];
 
   final loginResponse = await http.post(
-    Uri.parse('http://localhost:8000/auth/login'),
+    Uri.parse('http://10.0.2.2:8000/auth/login'),
     headers: {'Content-Type': 'application/json'},
     body: json.encode({
       'email': _emailController.text.trim(),

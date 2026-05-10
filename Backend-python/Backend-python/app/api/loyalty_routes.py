@@ -47,8 +47,30 @@ def get_loyalty_account(user_id: str):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid loyalty input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required loyalty field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid loyalty data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500,  detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected loyalty service error"
+        )
 
 
 @router.get("/points/{user_id}")
@@ -74,8 +96,30 @@ def get_points(user_id: str):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid loyalty input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required loyalty field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid loyalty data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500,  detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected loyalty service error"
+        )
 
 
 @router.post("/earn-points")
@@ -158,8 +202,30 @@ def earn_points(data: EarnPointsRequest):
         }
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid loyalty input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required loyalty field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid loyalty data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500,  detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected loyalty service error"
+        )
 
 
 @router.post("/redeem-points")
@@ -216,7 +282,7 @@ def redeem_points(data: RedeemPointsRequest):
                 "account_id": account_id,
                 "offer_id": data.offer_id
             }).execute()
-        except Exception as transaction_error:
+        except (RuntimeError, ValueError) as transaction_error:
             print("Transaction insert failed:", transaction_error)
 
         return {
@@ -232,8 +298,30 @@ def redeem_points(data: RedeemPointsRequest):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid loyalty input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required loyalty field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid loyalty data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500,  detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected loyalty service error"
+        )
 
 
 @router.get("/membership/{user_id}")
@@ -265,8 +353,30 @@ def get_membership(user_id: str):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid loyalty input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required loyalty field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid loyalty data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500,  detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected loyalty service error"
+        )
 
 
 @router.get("/transactions/{user_id}")
@@ -296,8 +406,30 @@ def get_transactions(user_id: str):
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid loyalty input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required loyalty field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid loyalty data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500,  detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected loyalty service error"
+        )
 
 
 @router.get("/programs")
@@ -309,8 +441,30 @@ def get_loyalty_programs():
     except HTTPException:
         raise
 
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid loyalty input: {str(e)}"
+        )
+
+    except KeyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required loyalty field: {str(e)}"
+        )
+
+    except TypeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid loyalty data format"
+        )
+
     except Exception:
-        raise HTTPException(status_code=500,  detail="Internal server error")
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected loyalty service error"
+        )
 
 
 @router.get("/admin-summary")
@@ -330,6 +484,9 @@ def get_loyalty_admin_summary(year: int = datetime.utcnow().year, month: int | N
             try:
                 date_text = str(date_value).replace("Z", "")
                 dt = datetime.fromisoformat(date_text)
+            except ValueError:
+                continue
+
             except Exception:
                 continue
 
@@ -359,6 +516,15 @@ def get_loyalty_admin_summary(year: int = datetime.utcnow().year, month: int | N
     
     except HTTPException:
         raise
-    
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid loyalty input: {str(e)}")
+
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=f"Missing required loyalty field: {str(e)}")
+
+    except TypeError:
+        raise HTTPException(status_code=500, detail="Invalid loyalty data format")
+
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Unexpected loyalty service error")

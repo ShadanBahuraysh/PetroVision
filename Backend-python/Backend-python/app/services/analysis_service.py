@@ -315,6 +315,15 @@ class AnalysisService:
                     "n_rows": len(station_df)
                 })
 
+            except KeyError:
+                continue
+
+            except ValueError:
+                continue
+
+            except TypeError:
+                continue
+
             except Exception as e:
                 print(f"Skipping station {station_id} due to error: {e}")
                 continue

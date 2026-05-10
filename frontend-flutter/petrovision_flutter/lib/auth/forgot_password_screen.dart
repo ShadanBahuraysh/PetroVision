@@ -51,7 +51,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _isLoading = false;
   bool _passwordVisible = false;
 
-  static const baseUrl = 'http://localhost:8000';
+  static const baseUrl = 'http://10.0.2.2:8000';
 
   @override
   void dispose() {

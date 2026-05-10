@@ -440,7 +440,7 @@ Future<void> _openGoogleMaps(double lat, double lng) async {
   Future<void> _loadOffers() async {
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:8000/offers'),
+      Uri.parse('http://10.0.2.2:8000/offers'),
     );
 
     if (response.statusCode == 200) {
@@ -504,7 +504,7 @@ Future<void> _openGoogleMaps(double lat, double lng) async {
 
   Future<void> _loadMapStations() async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
+      final response = await http.get(Uri.parse('http://10.0.2.2:8000/stations-db'));
       if (response.statusCode == 200) {
         List data = [];
         try {

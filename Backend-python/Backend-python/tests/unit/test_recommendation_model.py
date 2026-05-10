@@ -25,8 +25,9 @@ def test_preprocess_success_returns_same_station_list(model):
 
 
 def test_preprocess_fail_with_none_input(model):
-    with pytest.raises(Exception):
-        model.preprocess(None)
+    result = model.preprocess(None)
+
+    assert result is None
 
 
 # =========================

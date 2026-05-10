@@ -31,7 +31,7 @@ import '../widgets/admin_shell.dart';
 import '../widgets/dashboard_widgets.dart';
 import '../widgets/interactive_widgets.dart';
 
-const String _baseUrl = 'http://localhost:8000';
+const String _baseUrl = 'http://10.0.2.2:8000';
 
 class LoyaltyProgramsScreen extends StatefulWidget {
   const LoyaltyProgramsScreen({super.key});
