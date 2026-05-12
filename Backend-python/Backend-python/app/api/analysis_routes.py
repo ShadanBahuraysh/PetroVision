@@ -33,8 +33,7 @@ from app.services.explanation_service import ExplanationService
 router = APIRouter()
 
 analysis_service = AnalysisService()
-explanation_service = ExplanationService()
-
+explanation_service = ExplanationService(analysis_service)
 
 def _get_model_recommendation(station_id: str) -> str:
     fallback = "Review station performance and monitor operational indicators."

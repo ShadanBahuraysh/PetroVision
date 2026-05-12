@@ -623,3 +623,57 @@ def update_admin(user_id: str, data: dict):
 
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected authentication service error")
+
+@router.put("/update-user/{user_id}")
+def update_user(user_id: str, data: dict):
+    try:
+        update_data = {k: v for k, v in {
+            "fname": data.get("fname"),
+            "lname": data.get("lname"),
+            "phone": data.get("phone"),
+        }.items() if v is not None}
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        result = (
+            supabase.table("users")
+            .update(update_data)
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        return {"message": "User updated successfully", "user": result.data}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=repr(e))
+    
+@router.post("/change-password/{user_id}")
+def change_password(user_id: str, data: dict):
+    try:
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+
+        if not current_password or not new_password:
+            raise HTTPException(status_code=400, detail="Missing fields")
+
+        result = supabase.table("users").select("password").eq("user_id", user_id).execute()
+        if not result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        stored_password = result.data[0]["password"]
+
+        if not auth_service._check_password(current_password.strip(), stored_password):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+        hashed = auth_service._hash_password(new_password)
+        supabase.table("users").update({"password": hashed}).eq("user_id", user_id).execute()
+
+        return {"message": "Password changed successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=repr(e))

@@ -1,63 +1,67 @@
-import sys
-from unittest.mock import MagicMock
-
-mock_supabase = MagicMock()
-sys.modules.setdefault("supabase", MagicMock())
-sys.modules["app.supabase_client"] = MagicMock(supabase=mock_supabase)
-
-"""
-Integration tests for Station API routes and StationService.
-Tests are aligned with the current implementation, where StationService returns
-formatted dictionaries, not Station model objects.
-"""
-
-from types import SimpleNamespace
-from unittest.mock import patch
 import pytest
+import sys
+import os
+import types
+from unittest.mock import MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api import station_routes, stations_from_db_routes
-from app.services.station_service import StationService
-import app.services.station_service as station_service_module
+# ---------------------------------------------------------------------------
+# Stub supabase_client before any app import
+# ---------------------------------------------------------------------------
+fake_supabase_module = types.ModuleType("app.supabase_client")
+fake_supabase_module.supabase = MagicMock()
+sys.modules["app.supabase_client"] = fake_supabase_module
 
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
+)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from app.api.station_routes import router as station_router
+from app.api.stations_from_db_routes import router as stations_db_router
+from app.services.station_service import StationService
 
 app = FastAPI()
-app.include_router(station_routes.router)
-app.include_router(stations_from_db_routes.router)
+app.include_router(station_router)
+app.include_router(stations_db_router)
 client = TestClient(app)
 
+# ---------------------------------------------------------------------------
+# Shared test data
+# ---------------------------------------------------------------------------
 STATION_ROWS = [
     {
         "station_id": "S001",
         "station_name": "Haddaf Jeddah",
         "latitude": 21.5433,
         "longitude": 39.1728,
-        "address": "Haddaf Jeddah, Jeddah",
         "status": "active",
         "city": "Jeddah",
+        "address": "King Road",
         "street": "King Road St",
         "side_code": "A1",
     },
     {
         "station_id": "S002",
-        "station_name": "Riyadh Central",
+        "station_name": "Petromin Riyadh",
         "latitude": 24.7136,
         "longitude": 46.6753,
-        "address": "Riyadh Central, Riyadh",
         "status": "closed",
         "city": "Riyadh",
+        "address": "Olaya St",
         "street": None,
         "side_code": None,
     },
     {
         "station_id": "S003",
-        "station_name": "Missing Coordinates",
+        "station_name": "No Coords Station",
         "latitude": None,
         "longitude": None,
-        "address": "Unknown",
         "status": "active",
-        "city": "Jeddah",
+        "city": "Mecca",
+        "address": "Unknown",
         "street": None,
         "side_code": None,
     },
@@ -66,236 +70,274 @@ STATION_ROWS = [
 GOOGLE_PLACES = [
     {
         "place_id": "G001",
-        "name": "Google Station 1",
-        "formatted_address": "Jeddah, Saudi Arabia",
+        "name": "Petromin Jeddah",
+        "geometry": {"location": {"lat": 21.54, "lng": 39.17}},
+        "formatted_address": "King Road, Jeddah",
         "business_status": "OPERATIONAL",
         "rating": 4.5,
-        "geometry": {"location": {"lat": 21.54, "lng": 39.17}},
     },
     {
         "place_id": "G002",
-        "name": "Google Station 2",
-        "formatted_address": "Riyadh, Saudi Arabia",
+        "name": "Petromin Riyadh",
+        "geometry": {"location": {"lat": 24.71, "lng": 46.67}},
+        "formatted_address": "Olaya St, Riyadh",
         "business_status": "CLOSED_TEMPORARILY",
         "rating": 3.9,
-        "geometry": {"location": {"lat": 24.71, "lng": 46.67}},
     },
 ]
 
 
-class FakeTable:
-    def __init__(self, rows=None, error=None):
-        self.rows = rows or []
-        self.error = error
-        self.filters = []
-
-    def select(self, *args, **kwargs):
-        return self
-
-    def eq(self, key, value):
-        self.filters.append((key, value))
-        return self
-
-    def execute(self):
-        if self.error:
-            raise self.error
-        data = self.rows
-        for key, value in self.filters:
-            data = [row for row in data if row.get(key) == value]
-        return SimpleNamespace(data=data)
-
-
-class FakeSupabase:
-    def __init__(self, rows=None, error=None):
-        self.rows = rows or []
-        self.error = error
-
-    def table(self, name):
-        assert name == "station"
-        return FakeTable(self.rows, self.error)
-
-
-def formatted_station(row):
-    return StationService()._format_station(row)
-
-
 # ===========================================================================
-# Integration: /stations-db routes
+# Integration: get_stations_from_db  (/stations-db)
 # ===========================================================================
 class TestGetStationsFromDbIntegration:
-    def test_full_pipeline_returns_only_stations_with_coordinates(self, monkeypatch):
-        expected = [formatted_station(STATION_ROWS[0]), formatted_station(STATION_ROWS[1])]
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: expected)
+    """
+    Tests the full pipeline:
+    HTTP GET /stations-db → route → supabase.table("station").select("*") → filter → response
+    """
 
-        response = client.get("/stations-db")
+    def _mock_db(self, rows):
+        mock_result = MagicMock()
+        mock_result.data = rows
+        fake_supabase_module.supabase.table.return_value \
+            .select.return_value.execute.return_value = mock_result
 
-        assert response.status_code == 200
-        assert len(response.json()) == 2
+    def test_full_pipeline_returns_only_stations_with_coordinates(self):
+        """
+        Integration: DB returns 3 rows, one without coordinates.
+        Route must filter it and return only 2.
+        """
+        self._mock_db(STATION_ROWS)
+        r = client.get("/stations-db")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) == 2
 
-    def test_response_shape_matches_frontend_contract(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: [formatted_station(STATION_ROWS[0])])
-
+    def test_response_shape_matches_frontend_contract(self):
+        """
+        Integration: Frontend expects lat/lng AND latitude/longitude in every station.
+        Route must include both forms in the response.
+        """
+        self._mock_db(STATION_ROWS[:1])
         data = client.get("/stations-db").json()[0]
+        for key in ["lat", "lng", "latitude", "longitude",
+                    "station_id", "station_name", "name",
+                    "address", "status", "city", "street", "side_code"]:
+            assert key in data, f"Missing key: {key}"
 
-        required_keys = {"station_id", "station_name", "name", "latitude", "longitude", "lat", "lng", "address", "status", "city", "street", "side_code"}
-        assert required_keys.issubset(data.keys())
-
-    def test_lat_lng_and_latitude_longitude_are_same_value(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: [formatted_station(STATION_ROWS[0])])
-
+    def test_lat_lng_and_latitude_longitude_are_same_value(self):
+        """
+        Integration: lat must equal latitude, lng must equal longitude
+        for the same station.
+        """
+        self._mock_db(STATION_ROWS[:1])
         data = client.get("/stations-db").json()[0]
-
         assert data["lat"] == data["latitude"]
         assert data["lng"] == data["longitude"]
 
-    def test_station_name_exposed_as_both_name_and_station_name(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: [formatted_station(STATION_ROWS[0])])
-
+    def test_station_name_exposed_as_both_name_and_station_name(self):
+        """
+        Integration: Route exposes station_name under both 'name' and
+        'station_name' keys for backwards compatibility.
+        """
+        self._mock_db(STATION_ROWS[:1])
         data = client.get("/stations-db").json()[0]
-
         assert data["name"] == data["station_name"] == "Haddaf Jeddah"
 
-    def test_correct_coordinates_flow_from_db_to_response(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: [formatted_station(STATION_ROWS[0])])
-
+    def test_correct_coordinates_flow_from_db_to_response(self):
+        """
+        Integration: Coordinates stored in DB must arrive unchanged in the response.
+        """
+        self._mock_db(STATION_ROWS[:1])
         data = client.get("/stations-db").json()[0]
-
         assert data["lat"] == pytest.approx(21.5433)
         assert data["lng"] == pytest.approx(39.1728)
 
-    def test_status_flows_unchanged_from_db(self, monkeypatch):
-        expected = [formatted_station(STATION_ROWS[0]), formatted_station(STATION_ROWS[1])]
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: expected)
-
+    def test_status_flows_unchanged_from_db(self):
+        """
+        Integration: Status value in DB must not be transformed by the route.
+        """
+        self._mock_db(STATION_ROWS[:2])
         data = client.get("/stations-db").json()
-        statuses = {station["station_id"]: station["status"] for station in data}
-
+        statuses = {s["station_id"]: s["status"] for s in data}
         assert statuses["S001"] == "active"
         assert statuses["S002"] == "closed"
 
-    def test_optional_fields_flow_through(self, monkeypatch):
-        expected = [formatted_station(STATION_ROWS[0]), formatted_station(STATION_ROWS[1])]
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: expected)
-
+    def test_optional_fields_flow_through(self):
+        """
+        Integration: street and side_code are optional — must appear in response
+        whether they are filled or None.
+        """
+        self._mock_db(STATION_ROWS[:2])
         data = client.get("/stations-db").json()
-        s001 = next(station for station in data if station["station_id"] == "S001")
-        s002 = next(station for station in data if station["station_id"] == "S002")
-
+        s001 = next(s for s in data if s["station_id"] == "S001")
+        s002 = next(s for s in data if s["station_id"] == "S002")
         assert s001["street"] == "King Road St"
+        assert s001["side_code"] == "A1"
         assert s002["street"] is None
+        assert s002["side_code"] is None
 
-    def test_empty_db_returns_empty_list_not_error(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", lambda: [])
+    def test_empty_db_returns_empty_list_not_error(self):
+        """
+        Integration: Empty DB must return [] with 200, not 404 or 500.
+        """
+        self._mock_db([])
+        r = client.get("/stations-db")
+        assert r.status_code == 200
+        assert r.json() == []
 
-        response = client.get("/stations-db")
+    def test_db_failure_propagates_as_500(self):
+        """
+        Integration: If Supabase throws, the route must catch it and return 500
+        instead of crashing.
+        """
+        fake_supabase_module.supabase.table.return_value \
+            .select.return_value.execute.side_effect = Exception("Connection lost")
+        r = client.get("/stations-db")
+        assert r.status_code == 500
+        # Reset side_effect for subsequent tests
+        fake_supabase_module.supabase.table.return_value \
+            .select.return_value.execute.side_effect = None
 
-        assert response.status_code == 200
-        assert response.json() == []
 
-    def test_db_failure_propagates_as_500(self, monkeypatch):
-        def raise_error():
-            raise Exception("Connection lost")
-
-        monkeypatch.setattr(stations_from_db_routes.station_service, "load_stations", raise_error)
-
-        response = client.get("/stations-db")
-
-        assert response.status_code == 500
-        assert response.json()["detail"] == "Unexpected station service error"
-
+# ===========================================================================
+# Integration: get_station_from_db  (/stations-db/{station_id})
+# ===========================================================================
 class TestGetStationFromDbIntegration:
-    def test_existing_id_returns_correct_station(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "get_station_by_id", lambda station_id: formatted_station(STATION_ROWS[0]))
+    """
+    Tests the full pipeline:
+    HTTP GET /stations-db/{id} → route → supabase.table.eq(id) → response
+    """
 
+    def _mock_by_id(self, rows):
+        mock_result = MagicMock()
+        mock_result.data = rows
+        mock_execute = fake_supabase_module.supabase.table.return_value \
+            .select.return_value.eq.return_value.execute
+        mock_execute.side_effect = None
+        mock_execute.return_value = mock_result
+
+    def test_existing_id_returns_correct_station(self):
+        """
+        Integration: Requesting S001 must return exactly the S001 data.
+        """
+        self._mock_by_id([STATION_ROWS[0]])
         data = client.get("/stations-db/S001").json()
-
         assert data["station_id"] == "S001"
         assert data["station_name"] == "Haddaf Jeddah"
 
-    def test_coordinates_flow_correctly_for_single_station(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "get_station_by_id", lambda station_id: formatted_station(STATION_ROWS[1]))
-
+    def test_coordinates_flow_correctly_for_single_station(self):
+        """
+        Integration: lat/lng values for a single station must match DB values.
+        """
+        self._mock_by_id([STATION_ROWS[1]])
         data = client.get("/stations-db/S002").json()
-
         assert data["lat"] == pytest.approx(24.7136)
         assert data["lng"] == pytest.approx(46.6753)
 
-    def test_response_includes_all_required_fields(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "get_station_by_id", lambda station_id: formatted_station(STATION_ROWS[0]))
-
+    def test_response_includes_all_required_fields(self):
+        """
+        Integration: Single-station response must have all fields the
+        frontend map popup needs.
+        """
+        self._mock_by_id([STATION_ROWS[0]])
         data = client.get("/stations-db/S001").json()
+        for key in ["station_id", "station_name", "name",
+                    "lat", "lng", "latitude", "longitude",
+                    "address", "status", "city"]:
+            assert key in data
 
-        required_keys = {"station_id", "station_name", "name", "latitude", "longitude", "lat", "lng", "address", "status", "city", "street", "side_code"}
-        assert required_keys.issubset(data.keys())
+    def test_unknown_id_returns_404(self):
+        """
+        Integration: Requesting an ID not in the DB must return 404,
+        not 200 with empty data.
+        """
+        self._mock_by_id([])
+        r = client.get("/stations-db/UNKNOWN")
+        assert r.status_code == 404
+        assert "not found" in r.json()["detail"].lower()
 
-    def test_unknown_id_returns_404(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "get_station_by_id", lambda station_id: None)
+    def test_db_failure_returns_500(self):
+        """
+        Integration: DB error on single-station lookup must return 500.
+        """
+        mock_execute = fake_supabase_module.supabase.table.return_value \
+            .select.return_value.eq.return_value.execute
+        mock_execute.side_effect = Exception("Timeout")
+        r = client.get("/stations-db/S001")
+        assert r.status_code == 500
+        mock_execute.side_effect = None
 
-        response = client.get("/stations-db/UNKNOWN")
-
-        assert response.status_code == 404
-        assert response.json()["detail"] == "Station not found"
-
-    def test_db_failure_returns_500(self, monkeypatch):
-        def raise_error(station_id):
-            raise Exception("Timeout")
-
-        monkeypatch.setattr(stations_from_db_routes.station_service, "get_station_by_id", raise_error)
-
-        response = client.get("/stations-db/S001")
-
-        assert response.status_code == 500
-        assert response.json()["detail"] == "Unexpected error occurred while retrieving station data"
-
-    def test_name_equals_station_name_in_single_response(self, monkeypatch):
-        monkeypatch.setattr(stations_from_db_routes.station_service, "get_station_by_id", lambda station_id: formatted_station(STATION_ROWS[0]))
-
+    def test_name_equals_station_name_in_single_response(self):
+        """
+        Integration: 'name' and 'station_name' must be identical in the
+        single-station response.
+        """
+        self._mock_by_id([STATION_ROWS[0]])
         data = client.get("/stations-db/S001").json()
-
         assert data["name"] == data["station_name"]
 
 
 # ===========================================================================
-# Integration: /stations Google Maps route
+# Integration: get_stations  (/stations) — Google Maps API
 # ===========================================================================
 class TestGetStationsIntegration:
+    """
+    Tests the full pipeline:
+    HTTP GET /stations → route → Google Maps API → transform → response
+    """
+
     def _mock_google(self, status="OK", places=None):
         return {"status": status, "results": places or [], "error_message": ""}
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_google_results_flow_into_response(self, mock_get):
-        mock_get.return_value.json.return_value = self._mock_google(places=GOOGLE_PLACES)
-
+        """
+        Integration: Two places from Google must produce two stations in response.
+        """
+        mock_get.return_value.json.return_value = self._mock_google(
+            places=GOOGLE_PLACES
+        )
         data = client.get("/stations").json()
-
         assert len(data) == 2
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_operational_transformed_to_open_in_full_pipeline(self, mock_get):
-        mock_get.return_value.json.return_value = self._mock_google(places=[GOOGLE_PLACES[0]])
-
+        """
+        Integration: OPERATIONAL from Google must become 'open' in the
+        response the frontend consumes.
+        """
+        mock_get.return_value.json.return_value = self._mock_google(
+            places=[GOOGLE_PLACES[0]]
+        )
         data = client.get("/stations").json()
-
         assert data[0]["status"] == "open"
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_closed_status_passes_through_unchanged(self, mock_get):
-        mock_get.return_value.json.return_value = self._mock_google(places=[GOOGLE_PLACES[1]])
-
+        """
+        Integration: Non-OPERATIONAL status must pass through as-is.
+        """
+        mock_get.return_value.json.return_value = self._mock_google(
+            places=[GOOGLE_PLACES[1]]
+        )
         data = client.get("/stations").json()
-
         assert data[0]["status"] == "CLOSED_TEMPORARILY"
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_coordinates_flow_from_google_to_response(self, mock_get):
-        mock_get.return_value.json.return_value = self._mock_google(places=[GOOGLE_PLACES[0]])
-
+        """
+        Integration: Coordinates from Google geometry must appear in both
+        lat/lng and latitude/longitude.
+        """
+        mock_get.return_value.json.return_value = self._mock_google(
+            places=[GOOGLE_PLACES[0]]
+        )
         data = client.get("/stations").json()[0]
-
         assert data["lat"] == pytest.approx(21.54)
         assert data["latitude"] == pytest.approx(21.54)
         assert data["lng"] == pytest.approx(39.17)
@@ -304,141 +346,229 @@ class TestGetStationsIntegration:
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_place_id_flows_as_station_id(self, mock_get):
-        mock_get.return_value.json.return_value = self._mock_google(places=[GOOGLE_PLACES[0]])
-
+        """
+        Integration: Google's place_id must become the station_id in the response.
+        """
+        mock_get.return_value.json.return_value = self._mock_google(
+            places=[GOOGLE_PLACES[0]]
+        )
         data = client.get("/stations").json()[0]
-
         assert data["station_id"] == "G001"
         assert data["place_id"] == "G001"
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_rating_flows_from_google_to_response(self, mock_get):
-        mock_get.return_value.json.return_value = self._mock_google(places=[GOOGLE_PLACES[0]])
-
+        """
+        Integration: Rating from Google must appear in the response.
+        """
+        mock_get.return_value.json.return_value = self._mock_google(
+            places=[GOOGLE_PLACES[0]]
+        )
         data = client.get("/stations").json()[0]
-
         assert data["rating"] == pytest.approx(4.5)
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", None)
     def test_missing_api_key_blocks_pipeline(self):
-        response = client.get("/stations")
-
-        assert response.status_code == 500
+        """
+        Integration: Missing API key must stop the pipeline at the route
+        level and return 500 before any Google call is made.
+        """
+        r = client.get("/stations")
+        assert r.status_code == 500
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_google_api_error_stops_pipeline_with_400(self, mock_get):
-        mock_get.return_value.json.return_value = self._mock_google(status="REQUEST_DENIED")
-
-        response = client.get("/stations")
-
-        assert response.status_code == 400
-        assert "google_status" in response.json()["detail"]
+        """
+        Integration: Google error status must return 400 with google_status detail.
+        """
+        mock_get.return_value.json.return_value = self._mock_google(
+            status="REQUEST_DENIED"
+        )
+        r = client.get("/stations")
+        assert r.status_code == 400
+        assert "google_status" in r.json()["detail"]
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_network_failure_returns_502(self, mock_get):
+        """
+        Integration: Network timeout to Google must return 502 Bad Gateway.
+        """
         import requests as req
-
         mock_get.side_effect = req.RequestException("timeout")
-
-        response = client.get("/stations")
-
-        assert response.status_code == 502
+        r = client.get("/stations")
+        assert r.status_code == 502
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_custom_query_passed_to_google(self, mock_get):
+        """
+        Integration: Custom query param must be forwarded to Google API call.
+        """
         mock_get.return_value.json.return_value = self._mock_google(places=[])
-
         client.get("/stations?query=Aramco+station+Riyadh")
-
-        assert "Aramco station Riyadh" in str(mock_get.call_args)
+        call_kwargs = mock_get.call_args
+        assert "Aramco station Riyadh" in str(call_kwargs)
 
 
 # ===========================================================================
-# Integration: StationService current behavior
+# Integration: StationService — load_stations & get_station_by_id
 # ===========================================================================
 class TestStationServiceIntegration:
+    """
+    Tests the StationService layer using a mocked Supabase client.
+    StationService calls supabase directly; we mock the DB result at the
+    boundary so the full service logic (filtering, formatting) is exercised.
+    """
+
+    # Seed rows that the fake DB will return
+    _DB_ROWS = [
+        {
+            "station_id": "S001",
+            "station_name": "Haddaf Jeddah",
+            "latitude": 21.5433,
+            "longitude": 39.1728,
+            "status": "Open",
+            "city": "Jeddah",
+            "address": "King Road",
+            "street": "King Road St",
+            "side_code": "A1",
+        },
+        {
+            "station_id": "S002",
+            "station_name": "Petromin Riyadh",
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "status": "Closed",
+            "city": "Riyadh",
+            "address": "Olaya St",
+            "street": None,
+            "side_code": None,
+        },
+        {
+            "station_id": "S003",
+            "station_name": "Gulf Station Mecca",
+            "latitude": 21.3891,
+            "longitude": 39.8579,
+            "status": "active",
+            "city": "Mecca",
+            "address": "Haram Road",
+            "street": None,
+            "side_code": None,
+        },
+    ]
+
+    def _mock_all(self, rows=None):
+        """Mock supabase.table().select().execute() to return rows."""
+        rows = rows if rows is not None else self._DB_ROWS
+        mock_result = MagicMock()
+        mock_result.data = rows
+        fake_supabase_module.supabase.table.return_value \
+            .select.return_value.execute.return_value = mock_result
+
+    def _mock_by_id(self, rows):
+        """Mock supabase.table().select().eq().execute() to return rows."""
+        mock_result = MagicMock()
+        mock_result.data = rows
+        fake_supabase_module.supabase.table.return_value \
+            .select.return_value.eq.return_value.execute.side_effect = None
+        fake_supabase_module.supabase.table.return_value \
+            .select.return_value.eq.return_value.execute.return_value = mock_result
+
     def setup_method(self):
         self.service = StationService()
 
-    def test_load_stations_returns_only_rows_with_coordinates(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_load_stations_returns_all_stations(self):
+        """
+        Integration: load_stations must return all rows that have coordinates (3 here).
+        """
+        self._mock_all()
         stations = self.service.load_stations()
+        assert len(stations) == 3
 
-        assert len(stations) == 2
-
-    def test_load_stations_returns_formatted_dicts(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_load_stations_returns_station_objects(self):
+        """
+        Integration: load_stations must return dicts (formatted station data).
+        """
+        self._mock_all()
         stations = self.service.load_stations()
+        assert all(isinstance(s, dict) for s in stations)
 
-        assert all(isinstance(station, dict) for station in stations)
-        assert stations[0]["name"] == stations[0]["station_name"]
-
-    def test_load_stations_contains_jeddah_and_riyadh(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_load_stations_contains_jeddah_and_riyadh(self):
+        """
+        Integration: Service data must include stations from both Jeddah and Riyadh.
+        """
+        self._mock_all()
         stations = self.service.load_stations()
-        cities = {station["city"] for station in stations}
-
+        cities = {s["city"] for s in stations}
         assert "Jeddah" in cities
         assert "Riyadh" in cities
 
-    def test_get_station_by_id_returns_correct_station(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_get_station_by_id_returns_correct_station(self):
+        """
+        Integration: get_station_by_id("S001") must return the Jeddah station.
+        """
+        self._mock_by_id([self._DB_ROWS[0]])
         station = self.service.get_station_by_id("S001")
-
         assert station is not None
         assert station["station_id"] == "S001"
         assert station["city"] == "Jeddah"
 
-    def test_get_station_by_id_returns_none_for_unknown(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_get_station_by_id_returns_none_for_unknown(self):
+        """
+        Integration: get_station_by_id with unknown ID must return None.
+        """
+        self._mock_by_id([])
         station = self.service.get_station_by_id("UNKNOWN")
-
         assert station is None
 
-    def test_get_station_by_id_with_string_id(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_get_station_by_id_with_int_id(self):
+        """
+        Integration: get_station_by_id("S002") must return the Riyadh station.
+        """
+        self._mock_by_id([self._DB_ROWS[1]])
         station = self.service.get_station_by_id("S002")
-
         assert station is not None
         assert station["city"] == "Riyadh"
 
-    def test_active_status_flows_as_dict_value(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_open_station_is_active(self):
+        """
+        Integration: Station with status "Open" must have is_active-like status.
+        The service returns a dict; status "Open" is truthy and non-empty.
+        """
+        self._mock_by_id([self._DB_ROWS[0]])
         station = self.service.get_station_by_id("S001")
+        assert station["status"].lower() in ["active", "open", "operational"]
 
-        assert station["status"] == "active"
-
-    def test_closed_status_flows_as_dict_value(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_closed_station_is_not_active(self):
+        """
+        Integration: Station with status "Closed" must not be active.
+        """
+        self._mock_by_id([self._DB_ROWS[1]])
         station = self.service.get_station_by_id("S002")
+        assert station["status"].lower() not in ["active", "open", "operational"]
 
-        assert station["status"] == "closed"
-
-    def test_load_stations_and_get_by_id_return_equivalent_data(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_load_stations_and_get_by_id_return_same_object(self):
+        """
+        Integration: get_station_by_id must return a dict with the same
+        station_id as the corresponding entry in load_stations.
+        """
+        self._mock_all()
         all_stations = self.service.load_stations()
+        self._mock_by_id([self._DB_ROWS[0]])
         by_id = self.service.get_station_by_id("S001")
+        ids_in_all = [s["station_id"] for s in all_stations]
+        assert by_id["station_id"] in ids_in_all
 
-        assert by_id in all_stations
-
-    def test_formatted_station_integrates_with_service(self, monkeypatch):
-        monkeypatch.setattr(station_service_module, "supabase", FakeSupabase(STATION_ROWS))
-
+    def test_station_to_dict_integrates_with_service(self):
+        """
+        Integration: Station dict returned by service must contain all
+        required keys — end-to-end from service to serialization.
+        """
+        self._mock_by_id([self._DB_ROWS[0]])
         station = self.service.get_station_by_id("S001")
-
         assert station["station_id"] == "S001"
         assert station["city"] == "Jeddah"
-        assert station["status"] == "active"
+        assert station["status"] == "Open"

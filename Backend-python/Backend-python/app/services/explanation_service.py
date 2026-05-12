@@ -27,8 +27,8 @@ from app.services.analysis_service import AnalysisService
 
 
 class ExplanationService:
-    def __init__(self):
-        self.analysis_service = AnalysisService()
+    def __init__(self, analysis_service=None):
+        self.analysis_service = analysis_service or AnalysisService()
         self.api_key = os.getenv("OPENROUTER_API_KEY")
         self.model_name = os.getenv("MODEL_NAME", "deepseek/deepseek-chat")
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"

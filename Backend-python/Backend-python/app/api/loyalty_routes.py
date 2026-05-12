@@ -180,6 +180,18 @@ def earn_points(data: EarnPointsRequest):
             .eq("account_id", account_id)
             .execute()
         )
+
+        # Auto tier upgrade based on new points balance
+        if new_points >= 5000:
+            new_tier = "Gold"
+        elif new_points >= 1000:
+            new_tier = "Silver"
+        else:
+            new_tier = "Bronze"
+
+        supabase.table("membership").update(
+            {"tier": new_tier}
+        ).eq("account_id", account_id).execute()
         supabase.table("transactions").insert({
                 "transaction_id": generate_transaction_id(),
                 "date": datetime.utcnow().isoformat(),

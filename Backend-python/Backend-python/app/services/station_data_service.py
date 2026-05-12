@@ -57,7 +57,6 @@ class StationDataService:
             FROM {TABLE_NAME}
             WHERE TRIM(LOWER(station_id)) = TRIM(LOWER(%s))
         """
-
         df = pd.read_sql(query, self.engine, params=(station_id,))
         df.columns = df.columns.str.strip().str.lower()
 
@@ -70,7 +69,6 @@ class StationDataService:
 
         df = df.dropna(subset=["station_id"]) if "station_id" in df.columns else df
         df = df.reset_index(drop=True)
-
-
-
         return df
+    
+    
