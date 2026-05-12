@@ -84,9 +84,15 @@ class _LoyaltyDashboardScreenState extends State<LoyaltyDashboardScreen> {
     const Color scaffoldBg = Color(0xFFFBFBFB);
     final l10n = AppLocalizations.of(context)!;
 
-    final int nextTarget = tier == "Gold" ? 2000 : 1000;
-    final String nextTier = tier == "Bronze" ? "Silver" : "Gold";
-    final double progress = (currentPoints / nextTarget).clamp(0.0, 1.0);
+    final int nextTarget = tier == "Bronze" ? 1000 : 5000;
+
+    final String nextTier = tier == "Bronze"
+    ? "Silver"
+    : "Gold";
+
+    final double progress = tier == "Gold"
+    ? 1.0
+    : (currentPoints / nextTarget).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: scaffoldBg,

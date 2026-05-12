@@ -53,7 +53,7 @@ class _StationsPageState extends State<StationsPage> {
 
   Future<void> _loadStations() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8000/stations-db'));
+      final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
       if (response.statusCode == 200) {
         List data = [];
           try {

@@ -24,6 +24,7 @@
 import 'package:flutter/material.dart';
 import '../../services/loyalty_api_service.dart';
 import 'redemption_success_screen.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class ConfirmRedemptionScreen extends StatefulWidget {
   final String rewardType;
@@ -139,11 +140,20 @@ class _ConfirmRedemptionScreenState extends State<ConfirmRedemptionScreen> {
                   ),
                   child:  Column(
                     children: [
-  const Icon(
-    Icons.qr_code_2_rounded,
-    size: 180,
+  QrImageView(
+  data: redeemCode,
+  version: QrVersions.auto,
+  size: 180,
+  backgroundColor: Colors.white,
+  eyeStyle: const QrEyeStyle(
+    eyeShape: QrEyeShape.square,
     color: Color(0xFF1A2E35),
   ),
+  dataModuleStyle: const QrDataModuleStyle(
+    dataModuleShape: QrDataModuleShape.square,
+    color: Color(0xFF1A2E35),
+  ),
+),
   const SizedBox(height: 10),
   Text(
     redeemCode,

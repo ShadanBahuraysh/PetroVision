@@ -51,7 +51,7 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<FocusNode> _focusNodes =
       List.generate(6, (_) => FocusNode());
 
-  static const String _baseUrl = 'http://10.0.2.2:8000';
+  static const String _baseUrl = 'http://localhost:8000';
 
   bool _hasError    = false;
   bool _isVerifying = false;

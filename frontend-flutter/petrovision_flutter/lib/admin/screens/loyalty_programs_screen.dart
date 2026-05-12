@@ -26,12 +26,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:qr_flutter/qr_flutter.dart';
 import '../models/dashboard_models.dart';
 import '../widgets/admin_shell.dart';
 import '../widgets/dashboard_widgets.dart';
 import '../widgets/interactive_widgets.dart';
 
-const String _baseUrl = 'http://10.0.2.2:8000';
+const String _baseUrl = 'http://localhost:8000';
 
 class LoyaltyProgramsScreen extends StatefulWidget {
   const LoyaltyProgramsScreen({super.key});
@@ -566,10 +567,20 @@ class _QrPopup extends StatelessWidget {
           border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Column(children: [
-          // Simulated QR grid
-          SizedBox(
-            width: 120, height: 120,
-            child: CustomPaint(painter: _FakeQrPainter(color: color, seed: code.hashCode)),
+          // Real scannable QR code
+          QrImageView(
+            data: code,
+            version: QrVersions.auto,
+            size: 120,
+            eyeStyle: QrEyeStyle(
+              eyeShape: QrEyeShape.square,
+              color: color,
+            ),
+            dataModuleStyle: QrDataModuleStyle(
+              dataModuleShape: QrDataModuleShape.square,
+              color: color,
+            ),
+            backgroundColor: Colors.white,
           ),
           const SizedBox(height: 12),
           Container(
@@ -658,42 +669,6 @@ class _QrPopup extends StatelessWidget {
       ),
     );
   }
-}
-
-class _FakeQrPainter extends CustomPainter {
-  final Color color;
-  final int seed;
-  const _FakeQrPainter({required this.color, required this.seed});
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    final bg = Paint()..color = Colors.white;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bg);
-    final cells = 11;
-    final cell = size.width / cells;
-    final rng = seed;
-    // Draw random-ish cells based on seed
-    for (int r = 0; r < cells; r++) {
-      for (int c = 0; c < cells; c++) {
-        // Always draw corner finder patterns
-        final inTL = (r < 3 && c < 3);
-        final inTR = (r < 3 && c >= cells - 3);
-        final inBL = (r >= cells - 3 && c < 3);
-        if (inTL || inTR || inBL) {
-          final isOuter = (r == 0 || r == 2 || c == 0 || c == 2) ||
-              (r == 1 && c == 1);
-          if (isOuter) canvas.drawRect(Rect.fromLTWH(c * cell + 1, r * cell + 1, cell - 1, cell - 1), paint);
-          continue;
-        }
-        // Pseudo-random fill for data cells
-        final hash = ((r * 17 + c * 31 + rng * 7) ^ (r * c + rng)) % 3;
-        if (hash == 0) {
-          canvas.drawRect(Rect.fromLTWH(c * cell + 1, r * cell + 1, cell - 1, cell - 1), paint);
-        }
-      }
-    }
-  }
-  @override bool shouldRepaint(_FakeQrPainter o) => false;
 }
 
 class _EditBtn extends StatefulWidget {

@@ -25,7 +25,7 @@ import 'package:http/http.dart' as http;
 import '../widgets/admin_shell.dart';
 import '../widgets/dashboard_widgets.dart';
 
-const String _membersBaseUrl = 'http://10.0.2.2:8000';
+const String _membersBaseUrl = 'http://localhost:8000';
 
 class MembersScreen extends StatefulWidget {
   const MembersScreen({super.key});

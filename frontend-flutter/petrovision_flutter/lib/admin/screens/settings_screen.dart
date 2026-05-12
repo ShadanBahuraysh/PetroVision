@@ -44,7 +44,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const String baseUrl = "http://10.0.2.2:8000";
+  static const String baseUrl = "http://localhost:8000";
 
   bool isLoading = true;
   List<Map<String, dynamic>> admins = [];

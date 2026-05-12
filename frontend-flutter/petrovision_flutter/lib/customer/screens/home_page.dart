@@ -64,8 +64,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
+ int _currentIndex = 0;
+  late String _currentName; 
 
+  @override
+  void initState() {
+    super.initState();
+    _currentName = widget.name; 
+  }
   static const Color _primaryNavy = Color(0xFF1A2E35);
   static const Color _accentBlue = Color(0xFF4195AF);
   static const Color _scaffoldBg = Color(0xFFFBFBFB);
@@ -109,7 +115,7 @@ class _HomePageState extends State<HomePage> {
     ? HomeMainContent(
         key: UniqueKey(),
         userId: widget.userId,
-        name: widget.name,
+        name: _currentName,
       )
     : _currentIndex == 1
         ? const StationsPage()
@@ -192,22 +198,31 @@ class _HomePageState extends State<HomePage> {
         children: [
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: _primaryNavy),
-            accountName: Text("${widget.name} 👋", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            accountName: Text("${_currentName} 👋", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             accountEmail: Text(widget.email),
             currentAccountPicture: const CircleAvatar(
               backgroundColor: Colors.white,
               child: Icon(Icons.person, color: _primaryNavy, size: 35),
             ),
           ),
-          _drawerItem(Icons.person_outline, l10n.drawerMyProfile, () {
-            Navigator.push(context, MaterialPageRoute(
-  builder: (_) => ManageProfileScreen(
-    userId: widget.userId,
-    name: widget.name,
-    email: widget.email,
-  ),
-),);
-          }),
+         _drawerItem(Icons.person_outline, l10n.drawerMyProfile, () async {
+  final updatedName = await Navigator.push<String>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ManageProfileScreen(
+        userId: widget.userId,
+        name: _currentName,
+        email: widget.email,
+        
+      ),
+    ),
+  );
+  if (updatedName != null && mounted) {
+   setState(() {
+    _currentName = updatedName; // ← أضف هذا
+  });
+}
+}),
           _drawerItem(Icons.receipt_long_outlined, l10n.drawerTransactionHistory, () {
             Navigator.push(context, MaterialPageRoute(builder: (_) =>  HistoryPage(  userId: widget.userId,
 )));
@@ -440,7 +455,7 @@ Future<void> _openGoogleMaps(double lat, double lng) async {
   Future<void> _loadOffers() async {
   try {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/offers'),
+      Uri.parse('http://localhost:8000/offers'),
     );
 
     if (response.statusCode == 200) {
@@ -504,7 +519,7 @@ Future<void> _openGoogleMaps(double lat, double lng) async {
 
   Future<void> _loadMapStations() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8000/stations-db'));
+      final response = await http.get(Uri.parse('http://localhost:8000/stations-db'));
       if (response.statusCode == 200) {
         List data = [];
         try {
