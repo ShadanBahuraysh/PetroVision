@@ -58,24 +58,6 @@ def login(data: UserLogin):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
-
     except Exception:
         raise HTTPException(
             status_code=500,
@@ -99,25 +81,6 @@ def verify_otp(data: VerifyOtpRequest):
     except HTTPException:
         raise
 
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
-
     except Exception:
         raise HTTPException(
             status_code=500,
@@ -137,25 +100,6 @@ def resend_otp(data: ResendOtpRequest):
     
     except HTTPException:
         raise
-
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -180,24 +124,7 @@ def verify_admin_job(data: AdminJobRequest):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
-
+    
     except Exception:
         raise HTTPException(
             status_code=500,
@@ -230,23 +157,6 @@ def signup(data: UserCreate):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -271,15 +181,6 @@ def forgot_password(data: ForgotPasswordRequest):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid authentication input: {str(e)}")
-
-    except KeyError as e:
-        raise HTTPException(status_code=500, detail=f"Missing required authentication field: {str(e)}")
-
-    except TypeError:
-        raise HTTPException(status_code=500, detail="Invalid authentication request format")
-
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected authentication service error")
 
@@ -302,24 +203,6 @@ def reset_password(data: ResetPasswordRequest):
 
     except HTTPException:
         raise
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -366,23 +249,7 @@ def get_all_users():
         return members
 
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
+    
 
     except Exception:
         raise HTTPException(
@@ -399,25 +266,6 @@ def delete_user(user_id: str):
     
     except HTTPException:
         raise
-
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -440,24 +288,6 @@ def access_dashboard(user_id: str):
 
     except HTTPException:
         raise
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -501,24 +331,6 @@ def get_all_admins():
         raise
 
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
-
     except Exception:
         raise HTTPException(
             status_code=500,
@@ -552,25 +364,6 @@ def add_admin(data: UserCreate):
 
     except HTTPException:
         raise
-
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid authentication input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required authentication field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -611,15 +404,6 @@ def update_admin(user_id: str, data: dict):
         }
     except HTTPException:
         raise
-
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid authentication input: {str(e)}")
-
-    except KeyError as e:
-        raise HTTPException(status_code=500, detail=f"Missing required authentication field: {str(e)}")
-
-    except TypeError:
-        raise HTTPException(status_code=500, detail="Invalid authentication request format")
 
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected authentication service error")

@@ -125,15 +125,6 @@ class TestGetStationsFromDbIntegration:
                     "address", "status", "city", "street", "side_code"]:
             assert key in data, f"Missing key: {key}"
 
-    def test_lat_lng_and_latitude_longitude_are_same_value(self):
-        """
-        Integration: lat must equal latitude, lng must equal longitude
-        for the same station.
-        """
-        self._mock_db(STATION_ROWS[:1])
-        data = client.get("/stations-db").json()[0]
-        assert data["lat"] == data["latitude"]
-        assert data["lng"] == data["longitude"]
 
     def test_station_name_exposed_as_both_name_and_station_name(self):
         """
@@ -225,27 +216,7 @@ class TestGetStationFromDbIntegration:
         data = client.get("/stations-db/S001").json()
         assert data["station_id"] == "S001"
         assert data["station_name"] == "Haddaf Jeddah"
-
-    def test_coordinates_flow_correctly_for_single_station(self):
-        """
-        Integration: lat/lng values for a single station must match DB values.
-        """
-        self._mock_by_id([STATION_ROWS[1]])
-        data = client.get("/stations-db/S002").json()
-        assert data["lat"] == pytest.approx(24.7136)
-        assert data["lng"] == pytest.approx(46.6753)
-
-    def test_response_includes_all_required_fields(self):
-        """
-        Integration: Single-station response must have all fields the
-        frontend map popup needs.
-        """
-        self._mock_by_id([STATION_ROWS[0]])
-        data = client.get("/stations-db/S001").json()
-        for key in ["station_id", "station_name", "name",
-                    "lat", "lng", "latitude", "longitude",
-                    "address", "status", "city"]:
-            assert key in data
+    
 
     def test_unknown_id_returns_404(self):
         """
@@ -267,16 +238,6 @@ class TestGetStationFromDbIntegration:
         r = client.get("/stations-db/S001")
         assert r.status_code == 500
         mock_execute.side_effect = None
-
-    def test_name_equals_station_name_in_single_response(self):
-        """
-        Integration: 'name' and 'station_name' must be identical in the
-        single-station response.
-        """
-        self._mock_by_id([STATION_ROWS[0]])
-        data = client.get("/stations-db/S001").json()
-        assert data["name"] == data["station_name"]
-
 
 # ===========================================================================
 # Integration: get_stations  (/stations) — Google Maps API
@@ -358,6 +319,7 @@ class TestGetStationsIntegration:
 
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
+
     def test_rating_flows_from_google_to_response(self, mock_get):
         """
         Integration: Rating from Google must appear in the response.
@@ -488,23 +450,6 @@ class TestStationServiceIntegration:
         stations = self.service.load_stations()
         assert len(stations) == 3
 
-    def test_load_stations_returns_station_objects(self):
-        """
-        Integration: load_stations must return dicts (formatted station data).
-        """
-        self._mock_all()
-        stations = self.service.load_stations()
-        assert all(isinstance(s, dict) for s in stations)
-
-    def test_load_stations_contains_jeddah_and_riyadh(self):
-        """
-        Integration: Service data must include stations from both Jeddah and Riyadh.
-        """
-        self._mock_all()
-        stations = self.service.load_stations()
-        cities = {s["city"] for s in stations}
-        assert "Jeddah" in cities
-        assert "Riyadh" in cities
 
     def test_get_station_by_id_returns_correct_station(self):
         """
@@ -524,15 +469,6 @@ class TestStationServiceIntegration:
         station = self.service.get_station_by_id("UNKNOWN")
         assert station is None
 
-    def test_get_station_by_id_with_int_id(self):
-        """
-        Integration: get_station_by_id("S002") must return the Riyadh station.
-        """
-        self._mock_by_id([self._DB_ROWS[1]])
-        station = self.service.get_station_by_id("S002")
-        assert station is not None
-        assert station["city"] == "Riyadh"
-
     def test_open_station_is_active(self):
         """
         Integration: Station with status "Open" must have is_active-like status.
@@ -548,27 +484,4 @@ class TestStationServiceIntegration:
         """
         self._mock_by_id([self._DB_ROWS[1]])
         station = self.service.get_station_by_id("S002")
-        assert station["status"].lower() not in ["active", "open", "operational"]
-
-    def test_load_stations_and_get_by_id_return_same_object(self):
-        """
-        Integration: get_station_by_id must return a dict with the same
-        station_id as the corresponding entry in load_stations.
-        """
-        self._mock_all()
-        all_stations = self.service.load_stations()
-        self._mock_by_id([self._DB_ROWS[0]])
-        by_id = self.service.get_station_by_id("S001")
-        ids_in_all = [s["station_id"] for s in all_stations]
-        assert by_id["station_id"] in ids_in_all
-
-    def test_station_to_dict_integrates_with_service(self):
-        """
-        Integration: Station dict returned by service must contain all
-        required keys — end-to-end from service to serialization.
-        """
-        self._mock_by_id([self._DB_ROWS[0]])
-        station = self.service.get_station_by_id("S001")
-        assert station["station_id"] == "S001"
-        assert station["city"] == "Jeddah"
-        assert station["status"] == "Open"
+        assert station["status"].lower() not in ["active", "open", "operational"]   

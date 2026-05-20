@@ -381,7 +381,7 @@ class TierDistributionCard extends StatelessWidget {
                   children: [
                     Text('$total', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF111827))),
                     const SizedBox(height: 4),
-                    const Text('Active Members', style: TextStyle(color: Color(0xFF8A959E))),
+                    const Text('Total Members', style: TextStyle(color: Color(0xFF8A959E))),
                   ],
                 ),
               ),

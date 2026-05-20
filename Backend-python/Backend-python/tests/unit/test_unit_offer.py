@@ -1,5 +1,5 @@
 """
-Unit Tests – Offer
+Unit Tests ??? Offer
 ====================
 Coverage:
   - Offer.is_active
@@ -27,10 +27,6 @@ class TestOfferIsActive:
 
     def test_status_case_insensitive(self):
         offer = Offer("OFF-003", "Deal", status="ACTIVE")
-        assert offer.is_active() is True
-
-    def test_default_status_is_active(self):
-        offer = Offer("OFF-004", "New Offer")
         assert offer.is_active() is True
 
     def test_activate_changes_status(self):

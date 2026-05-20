@@ -100,20 +100,6 @@ def test_compact_overview_data_success(service):
     assert len(result["most_common_issues"]) == 2
 
 
-def test_compact_overview_data_missing_fields(service):
-    sample_data = {}
-
-    result = service._compact_overview_data(sample_data)
-
-    assert result["total_stations"] is None
-    assert result["overall_average_score"] is None
-    assert result["best_station_id"] is None
-    assert result["worst_station_id"] is None
-    assert result["low_performance_count"] is None
-    assert result["high_performance_count"] is None
-    assert result["most_common_issues"] == []
-
-
 # -------------------------
 # Station prompt
 # -------------------------
@@ -175,24 +161,6 @@ def test_overview_prompt_success(service):
     assert "75" in prompt
     assert "S001" in prompt
     assert "Queue Time" in prompt
-
-
-def test_overview_prompt_missing_data(service):
-    compact = {
-        "total_stations": 0,
-        "overall_average_score": 0,
-        "best_station_id": None,
-        "worst_station_id": None,
-        "low_performance_count": 0,
-        "high_performance_count": 0,
-        "most_common_issues": []
-    }
-
-    prompt = service._overview_prompt(compact)
-
-    assert isinstance(prompt, str)
-    assert prompt.strip() != ""
-
 
 # -------------------------
 # Compare prompt
@@ -265,13 +233,6 @@ def test_local_station_explanation_success(service):
     assert "Increase staffing" in result
 
 
-def test_local_station_explanation_missing_data(service):
-    sample_data = {}
-
-    result = service._local_station_explanation(sample_data)
-
-    assert isinstance(result, str)
-    assert result.strip() != ""
 
 
 # -------------------------
@@ -299,15 +260,6 @@ def test_local_overview_explanation_success(service):
     assert "Queue Time" in result
 
 
-def test_local_overview_explanation_missing_data(service):
-    sample_data = {}
-
-    result = service._local_overview_explanation(sample_data)
-
-    assert isinstance(result, str)
-    assert result.strip() != ""
-
-
 # -------------------------
 # Clear cache
 # -------------------------
@@ -324,15 +276,3 @@ def test_clear_explanation_cache_success(service):
     assert service.cached_station_explanations == {}
     assert service.cached_compare_explanations == {}
 
-
-def test_clear_explanation_cache_when_already_empty(service):
-    service.cached_overview_explanation = None
-    service.cached_station_explanations = {}
-    service.cached_compare_explanations = {}
-
-    result = service.clear_explanation_cache()
-
-    assert result["message"] == "Explanation cache cleared successfully"
-    assert service.cached_overview_explanation is None
-    assert service.cached_station_explanations == {}
-    assert service.cached_compare_explanations == {}

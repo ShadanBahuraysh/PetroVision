@@ -29,26 +29,10 @@ station_service = StationService()
 def get_stations_from_db():
     try:
         return station_service.load_stations()
-
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid station input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required station field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid station data format"
-        )
-
+    
+    except HTTPException:
+        raise
+    
     except Exception:
         raise HTTPException(
             status_code=500,
@@ -68,15 +52,6 @@ def get_station_from_db(station_id: str):
 
     except HTTPException:
         raise
-
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid station value: {str(e)}")
-
-    except KeyError as e:
-        raise HTTPException(status_code=500, detail=f"Missing station field: {str(e)}")
-
-    except TypeError:
-        raise HTTPException(status_code=500, detail="Invalid station data format")
 
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occurred while retrieving station data")

@@ -48,23 +48,6 @@ def get_loyalty_account(user_id: str):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid loyalty input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required loyalty field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid loyalty data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -96,24 +79,6 @@ def get_points(user_id: str):
 
     except HTTPException:
         raise
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid loyalty input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required loyalty field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid loyalty data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -215,24 +180,6 @@ def earn_points(data: EarnPointsRequest):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid loyalty input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required loyalty field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid loyalty data format"
-        )
-
     except Exception:
         raise HTTPException(
             status_code=500,
@@ -311,23 +258,6 @@ def redeem_points(data: RedeemPointsRequest):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid loyalty input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required loyalty field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid loyalty data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -366,23 +296,6 @@ def get_membership(user_id: str):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid loyalty input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required loyalty field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid loyalty data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -419,23 +332,6 @@ def get_transactions(user_id: str):
     except HTTPException:
         raise
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid loyalty input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required loyalty field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid loyalty data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -452,25 +348,6 @@ def get_loyalty_programs():
 
     except HTTPException:
         raise
-
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid loyalty input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required loyalty field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid loyalty data format"
-        )
 
     except Exception:
         raise HTTPException(
@@ -528,15 +405,6 @@ def get_loyalty_admin_summary(year: int = datetime.utcnow().year, month: int | N
     
     except HTTPException:
         raise
-
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid loyalty input: {str(e)}")
-
-    except KeyError as e:
-        raise HTTPException(status_code=500, detail=f"Missing required loyalty field: {str(e)}")
-
-    except TypeError:
-        raise HTTPException(status_code=500, detail="Invalid loyalty data format")
 
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected loyalty service error")

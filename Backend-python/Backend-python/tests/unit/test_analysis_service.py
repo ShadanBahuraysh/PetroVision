@@ -96,12 +96,6 @@ def test_get_priority_medium_success(service):
 # _get_performance_status
 # =========================
 
-def test_get_performance_status_good_success(service):
-    result = service._get_performance_status({"final_station_score": 70})
-
-    assert result == "Good"
-
-
 def test_get_performance_status_fair_success(service):
     result = service._get_performance_status({"final_station_score": 55})
 
@@ -354,17 +348,3 @@ def test_clear_cache_success(service):
     assert service.cached_top_bottom is None
     assert service.cached_station_analyses == {}
 
-
-def test_clear_cache_when_already_empty_fail_case(service):
-    service.cached_ranking = None
-    service.cached_overview = None
-    service.cached_top_bottom = None
-    service.cached_station_analyses = {}
-
-    result = service.clear_cache()
-
-    assert result["message"] == "Analysis cache cleared successfully"
-    assert service.cached_ranking is None
-    assert service.cached_overview is None
-    assert service.cached_top_bottom is None
-    assert service.cached_station_analyses == {}

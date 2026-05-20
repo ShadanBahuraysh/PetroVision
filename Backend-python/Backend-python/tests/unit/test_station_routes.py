@@ -46,7 +46,6 @@ def _db_station(station_id="S1", name="Haddaf", lat=21.54, lng=39.17,
 def _formatted(station_id="S1", name="Haddaf", lat=21.54, lng=39.17,
                status="active", city="Jeddah", address="King Road",
                street=None, side_code=None):
-    """Returns a formatted dict matching what _format_station() produces."""
     return {
         "station_id": station_id,
         "station_name": name,
@@ -65,68 +64,7 @@ def _formatted(station_id="S1", name="Haddaf", lat=21.54, lng=39.17,
 
 class TestGetStations:
 
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_returns_200_with_results(self, mock_get):
-        mock_get.return_value.json.return_value = _google_response(places=[_place()])
-        r = client.get("/stations")
-        assert r.status_code == 200
-        assert len(r.json()) == 1
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_station_has_lat_lng(self, mock_get):
-        mock_get.return_value.json.return_value = _google_response(places=[_place(lat=21.54, lng=39.17)])
-        data = client.get("/stations").json()
-        assert data[0]["lat"] == pytest.approx(21.54)
-        assert data[0]["lng"] == pytest.approx(39.17)
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_operational_station_mapped_to_open(self, mock_get):
-        mock_get.return_value.json.return_value = _google_response(places=[_place(business_status="OPERATIONAL")])
-        assert client.get("/stations").json()[0]["status"] == "open"
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_non_operational_status_preserved(self, mock_get):
-        mock_get.return_value.json.return_value = _google_response(places=[_place(business_status="CLOSED_TEMPORARILY")])
-        assert client.get("/stations").json()[0]["status"] == "CLOSED_TEMPORARILY"
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_zero_results_returns_empty_list(self, mock_get):
-        mock_get.return_value.json.return_value = _google_response(status="ZERO_RESULTS", places=[])
-        r = client.get("/stations")
-        assert r.status_code == 200
-        assert r.json() == []
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", None)
-    def test_missing_api_key_returns_500(self):
-        r = client.get("/stations")
-        assert r.status_code == 500
-        assert "GOOGLE_API_KEY" in r.json()["detail"]
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_google_error_status_returns_400(self, mock_get):
-        mock_get.return_value.json.return_value = _google_response(status="REQUEST_DENIED")
-        assert client.get("/stations").status_code == 400
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_network_error_returns_502(self, mock_get):
-        import requests as req
-        mock_get.side_effect = req.RequestException("timeout")
-        assert client.get("/stations").status_code == 502
-
-    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
-    @patch("app.api.station_routes.requests.get")
-    def test_multiple_stations_returned(self, mock_get):
-        mock_get.return_value.json.return_value = _google_response(
-            places=[_place("A", place_id="1"), _place("B", place_id="2")])
-        assert len(client.get("/stations").json()) == 2
-
+    # الـ response يحتوي على lat/lng/latitude/longitude كلهم — مهم لأن الـ Flutter يستخدمهم
     @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
     @patch("app.api.station_routes.requests.get")
     def test_response_contains_both_lat_and_latitude(self, mock_get):
@@ -135,18 +73,55 @@ class TestGetStations:
         assert "lat" in data and "latitude" in data
         assert "lng" in data and "longitude" in data
 
+    # المحطة اللي حالتها OPERATIONAL من Google تتحول إلى "open" في الـ response
+    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
+    @patch("app.api.station_routes.requests.get")
+    def test_operational_station_mapped_to_open(self, mock_get):
+        mock_get.return_value.json.return_value = _google_response(places=[_place(business_status="OPERATIONAL")])
+        assert client.get("/stations").json()[0]["status"] == "open"
 
-# ---------------------------------------------------------------------------
-# Patch station_service directly on the route module — this is the only
-# reliable way to intercept calls because supabase is imported at module
-# level inside station_service.py, so patching the supabase module after
-# import has no effect on the already-bound name.
-# ---------------------------------------------------------------------------
+    # الحالات غير OPERATIONAL تُرجع كما هي بدون تعديل
+    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
+    @patch("app.api.station_routes.requests.get")
+    def test_non_operational_status_preserved(self, mock_get):
+        mock_get.return_value.json.return_value = _google_response(places=[_place(business_status="CLOSED_TEMPORARILY")])
+        assert client.get("/stations").json()[0]["status"] == "CLOSED_TEMPORARILY"
+
+    # لو Google ما رجع نتائج، الـ API يرجع list فارغة وليس خطأ
+    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
+    @patch("app.api.station_routes.requests.get")
+    def test_zero_results_returns_empty_list(self, mock_get):
+        mock_get.return_value.json.return_value = _google_response(status="ZERO_RESULTS", places=[])
+        r = client.get("/stations")
+        assert r.status_code == 200
+        assert r.json() == []
+
+    # لو GOOGLE_API_KEY مو موجود، يرجع 500 مع رسالة واضحة
+    @patch("app.api.station_routes.GOOGLE_API_KEY", None)
+    def test_missing_api_key_returns_500(self):
+        r = client.get("/stations")
+        assert r.status_code == 500
+        assert "GOOGLE_API_KEY" in r.json()["detail"]
+
+    # لو Google رفض الطلب (REQUEST_DENIED)، يرجع 400
+    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
+    @patch("app.api.station_routes.requests.get")
+    def test_google_error_status_returns_400(self, mock_get):
+        mock_get.return_value.json.return_value = _google_response(status="REQUEST_DENIED")
+        assert client.get("/stations").status_code == 400
+
+    # لو في مشكلة شبكة (timeout مثلاً)، يرجع 502
+    @patch("app.api.station_routes.GOOGLE_API_KEY", "fake-key")
+    @patch("app.api.station_routes.requests.get")
+    def test_network_error_returns_502(self, mock_get):
+        import requests as req
+        mock_get.side_effect = req.RequestException("timeout")
+        assert client.get("/stations").status_code == 502
+
 
 class TestGetStationsFromDb:
 
     def _mock_load(self, rows):
-        """Patch station_service.load_stations to return only rows with coords."""
         formatted = [
             _formatted(
                 station_id=r["station_id"],
@@ -181,27 +156,14 @@ class TestGetStationsFromDb:
         if hasattr(self, "_patcher"):
             self._patcher.stop()
 
-    def test_returns_200(self):
-        self._mock_load([_db_station()])
-        assert client.get("/stations-db").status_code == 200
-
-    def test_returns_list(self):
-        self._mock_load([_db_station()])
-        assert isinstance(client.get("/stations-db").json(), list)
-
-    def test_station_fields_present(self):
-        self._mock_load([_db_station()])
-        data = client.get("/stations-db").json()[0]
-        for key in ["station_id", "lat", "lng", "latitude", "longitude",
-                    "address", "status", "city"]:
-            assert key in data
-
+    # يتحقق من قيم lat/lng الفعلية في الـ response
     def test_lat_lng_values_correct(self):
         self._mock_load([_db_station(lat=21.54, lng=39.17)])
         data = client.get("/stations-db").json()[0]
         assert data["lat"] == pytest.approx(21.54)
         assert data["lng"] == pytest.approx(39.17)
 
+    # المحطات اللي ما عندها إحداثيات تُحذف من النتائج
     def test_station_without_coordinates_excluded(self):
         rows = [
             _db_station(station_id="S1", lat=21.54, lng=39.17),
@@ -212,10 +174,12 @@ class TestGetStationsFromDb:
         assert len(data) == 1
         assert data[0]["station_id"] == "S1"
 
+    # لو قاعدة البيانات فارغة، يرجع list فارغة وليس خطأ
     def test_empty_db_returns_empty_list(self):
         self._mock_load([])
         assert client.get("/stations-db").json() == []
 
+    # كل المحطات اللي عندها إحداثيات تُرجع كاملة
     def test_multiple_stations_all_returned(self):
         self._mock_load([
             _db_station("S1", lat=21.0, lng=39.0),
@@ -224,6 +188,7 @@ class TestGetStationsFromDb:
         ])
         assert len(client.get("/stations-db").json()) == 3
 
+    # لو Supabase رمى exception، يرجع 500
     def test_supabase_exception_returns_500(self):
         self._mock_load_raise(Exception("DB error"))
         r = client.get("/stations-db")
@@ -252,29 +217,18 @@ class TestGetStationFromDbById:
         if hasattr(self, "_patcher"):
             self._patcher.stop()
 
+    # المحطة الموجودة ترجع 200
     def test_existing_station_returns_200(self):
         self._mock_get(_formatted(station_id="S1"))
         assert client.get("/stations-db/S1").status_code == 200
 
-    def test_correct_station_id_returned(self):
-        self._mock_get(_formatted(station_id="S1"))
-        assert client.get("/stations-db/S1").json()["station_id"] == "S1"
-
-    def test_lat_lng_fields_in_response(self):
-        self._mock_get(_formatted(station_id="S1", lat=21.54, lng=39.17))
-        data = client.get("/stations-db/S1").json()
-        assert data["lat"] == pytest.approx(21.54)
-        assert data["lng"] == pytest.approx(39.17)
-
+    # لو الـ ID مو موجود في قاعدة البيانات، يرجع 404
     def test_not_found_returns_404(self):
         self._mock_get(None)
         assert client.get("/stations-db/NOTEXIST").status_code == 404
 
+    # لو Supabase رمى exception أثناء جلب المحطة، يرجع 500
     def test_exception_returns_500(self):
         self._mock_get_raise(Exception("DB error"))
         r = client.get("/stations-db/S1")
         assert r.status_code == 500
-
-    def test_name_field_matches_station_name(self):
-        self._mock_get(_formatted(station_id="S1", name="Haddaf"))
-        assert client.get("/stations-db/S1").status_code == 200

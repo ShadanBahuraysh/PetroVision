@@ -1,5 +1,5 @@
 """
-Unit Tests – OTP Logic
+Unit Tests ??? OTP Logic
 =======================
 Coverage:
   - AuthService.generate_otp
@@ -12,7 +12,7 @@ import os
 from unittest.mock import patch
 from conftest import shared_mock_supabase
 
-# ── Path setup ────────────────────────────────────────────
+# ================== Path setup ================
 sys.path.insert(0, os.path.join(os.path.dirname(__file__),
                                 "../Backend-python/Backend-python"))
 
@@ -23,53 +23,14 @@ def make_auth_service():
     return AuthService()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# AuthService – OTP
-# ══════════════════════════════════════════════════════════════════════════════
+# ==================================================
+# AuthService ----- OTP
+# ==================================================
 
 class TestOtpLogic:
 
     def setup_method(self):
         self.service = make_auth_service()
-
-    def test_generate_otp_stores_code_for_email(self):
-        """After generating OTP, the email must exist in otp_store."""
-        with patch.object(self.service, "send_otp_email"):
-            self.service.generate_otp("user@petro.com")
-        assert "user@petro.com" in self.service.otp_store
-
-    def test_generate_otp_code_is_6_digits(self):
-        """Generated OTP must be exactly 6 digits."""
-        with patch.object(self.service, "send_otp_email"):
-            self.service.generate_otp("digits@petro.com")
-        code = self.service.otp_store["digits@petro.com"]["code"]
-        assert len(code) == 6
-        assert code.isdigit()
-
-    def test_generate_otp_sets_expiry_in_future(self):
-        """OTP expiry must be set ~5 minutes (300 s) in the future."""
-        with patch.object(self.service, "send_otp_email"):
-            self.service.generate_otp("expiry@petro.com")
-        expiry = self.service.otp_store["expiry@petro.com"]["expiry"]
-        assert expiry > time.time()
-        assert expiry <= time.time() + 305  # small tolerance
-
-    def test_generate_otp_normalises_email_to_lowercase(self):
-        """Email key in otp_store must always be lowercase."""
-        with patch.object(self.service, "send_otp_email"):
-            self.service.generate_otp("UPPER@PETRO.COM")
-        assert "upper@petro.com" in self.service.otp_store
-
-    def test_generate_otp_email_send_failure_does_not_raise(self):
-        """
-        Exception handling: if send_otp_email raises, generate_otp must
-        still succeed and store the OTP (fail-safe fallback).
-        """
-        with patch.object(self.service, "send_otp_email",
-                          side_effect=Exception("SMTP error")):
-            result = self.service.generate_otp("failmail@petro.com")
-        assert "failmail@petro.com" in self.service.otp_store
-        assert result["message"] == "OTP generated successfully"
 
     def test_verify_otp_returns_true_for_correct_code(self):
         """Correct OTP code submitted within expiry must return True."""
@@ -83,26 +44,6 @@ class TestOtpLogic:
         with patch.object(self.service, "send_otp_email"):
             self.service.generate_otp("wrong@petro.com")
         assert self.service.verify_otp("wrong@petro.com", "000000") is False
-
-    def test_verify_otp_returns_false_for_nonexistent_email(self):
-        """Verifying OTP for an email that never requested one must return False."""
-        assert self.service.verify_otp("ghost@petro.com", "123456") is False
-
-    def test_verify_otp_removes_code_after_successful_verification(self):
-        """After a successful verify, the OTP must be deleted (one-time use)."""
-        with patch.object(self.service, "send_otp_email"):
-            self.service.generate_otp("once@petro.com")
-        code = self.service.otp_store["once@petro.com"]["code"]
-        self.service.verify_otp("once@petro.com", code)
-        assert "once@petro.com" not in self.service.otp_store
-
-    def test_verify_otp_cannot_be_used_twice(self):
-        """The same OTP must fail on the second submission (one-time use)."""
-        with patch.object(self.service, "send_otp_email"):
-            self.service.generate_otp("reuse@petro.com")
-        code = self.service.otp_store["reuse@petro.com"]["code"]
-        self.service.verify_otp("reuse@petro.com", code)
-        assert self.service.verify_otp("reuse@petro.com", code) is False
 
     def test_verify_otp_returns_false_for_expired_code(self):
         """

@@ -35,27 +35,22 @@ router = APIRouter()
 analysis_service = AnalysisService()
 explanation_service = ExplanationService(analysis_service)
 
+
 def _get_model_recommendation(station_id: str) -> str:
     fallback = "Review station performance and monitor operational indicators."
-
     try:
         station_analysis = analysis_service.get_station_analysis(station_id)
         actions = station_analysis.get("recommended_actions", [])
-
         if actions:
             first_action = actions[0]
             return first_action.get("action") or fallback
-
         return fallback
-
     except KeyError as action_error:
         print(f"Could not load recommendation for {station_id}: {action_error}")
         return fallback
-
     except ValueError as action_error:
         print(f"Could not load recommendation for {station_id}: {action_error}")
         return fallback
-
     except Exception as action_error:
         print(f"Could not load recommendation for {station_id}: {action_error}")
         return fallback
@@ -70,10 +65,8 @@ def _build_report_summary(rows):
             "fair_stations": 0,
             "poor_stations": 0,
         }
-
     total = len(rows)
     average_score = round(sum(float(row.get("score") or 0) for row in rows) / total, 2)
-
     return {
         "total_stations": total,
         "average_score": average_score,
@@ -86,17 +79,13 @@ def _build_report_summary(rows):
 def _build_report_insights(rows):
     if not rows:
         return []
-
     top_station = max(rows, key=lambda x: float(x.get("score") or 0))
     weakest_station = min(rows, key=lambda x: float(x.get("score") or 0))
-
     issue_counts = {}
     for row in rows:
         issue = row.get("top_issue") or "No major issue"
         issue_counts[issue] = issue_counts.get(issue, 0) + 1
-
     most_common_issue = max(issue_counts, key=issue_counts.get)
-
     return [
         f"Top performing station is {top_station['station_id']} with score {top_station['score']}.",
         f"Weakest station is {weakest_station['station_id']} with score {weakest_station['score']}.",
@@ -106,16 +95,13 @@ def _build_report_insights(rows):
 
 def _build_export_rows():
     ranking = analysis_service.get_ranking()
-
     if not ranking:
         raise HTTPException(
             status_code=400,
             detail="No analysis data available. Please run analysis first.",
         )
-
     generated_at = datetime.now(ZoneInfo("Asia/Riyadh")).isoformat()
     rows = []
-
     for item in ranking:
         station_id = item.get("station_id")
         score = item.get("final_station_score")
@@ -123,7 +109,6 @@ def _build_export_rows():
         priority = item.get("priority")
         top_issue = item.get("top_issue") or "No major issue"
         recommendation = item.get("recommendation") or "Review station performance and monitor operational indicators."
-
         rows.append({
             "station_id": station_id,
             "score": score,
@@ -132,20 +117,16 @@ def _build_export_rows():
             "top_issue": top_issue,
             "recommendation": recommendation,
         })
-
     summary = _build_report_summary(rows)
     insights = _build_report_insights(rows)
-
     return generated_at, summary, insights, rows
 
 
 def _save_rows_to_report_table(rows, generated_at):
     if not rows:
         raise HTTPException(status_code=400, detail="No report rows available to save.")
-
     timestamp = datetime.now(ZoneInfo("Asia/Riyadh")).strftime("%Y%m%d%H%M%S")
     db_rows = []
-
     for index, row in enumerate(rows, start=1):
         db_rows.append({
             "report_id": f"RPT-{timestamp}-{index:04d}",
@@ -160,254 +141,260 @@ def _save_rows_to_report_table(rows, generated_at):
             "recommendation": row.get("recommendation"),
             "generation_time": generated_at,
         })
-
     result = supabase.table("report").insert(db_rows).execute()
-
     if not result.data:
         raise HTTPException(status_code=500, detail="Report could not be saved to database.")
-
     return len(db_rows)
 
+
+# ─────────────────────────────────────────────────────────────
+# Run Analysis
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/run-all")
 def run_all_analysis(force: bool = False):
     try:
         return analysis_service.run_full_analysis(force=force)
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
-        )
-
-    except KeyError as e:
+    except MemoryError:
         raise HTTPException(
             status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
+            detail="Not enough memory to load station data for analysis."
         )
 
-    except TypeError:
+    except FileNotFoundError as e:
         raise HTTPException(
             status_code=500,
-            detail="Invalid analysis data format"
+            detail=f"ML model file not found: {str(e)}"
+        )
+
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis pipeline failed during execution: {str(e)}"
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while running the analysis."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Overview
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/overview")
 def get_overview():
     try:
         return analysis_service.get_overview()
 
-    except ValueError as e:
+    except LookupError:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
+            status_code=404,
+            detail="Overview data not found. Please run analysis first."
         )
 
-    except KeyError as e:
+    except ZeroDivisionError:
         raise HTTPException(
             status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            detail="Overview calculation failed: no station records to aggregate."
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while loading the overview."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Ranking
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/ranking")
 def get_ranking():
     try:
         return analysis_service.get_ranking()
 
-    except ValueError as e:
+    except LookupError:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            status_code=404,
+            detail="Ranking data not found. Please run analysis first."
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while loading the station ranking."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Top / Bottom 10
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/top-bottom")
 def get_top_bottom():
     try:
         return analysis_service.get_top_bottom_10()
 
+    except LookupError:
+        raise HTTPException(
+            status_code=404,
+            detail="Top/bottom data not found. Please run analysis first."
+        )
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            detail=f"Not enough stations to produce a top/bottom ranking: {str(e)}"
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while loading top/bottom stations."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Single Station Analysis
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/station/{station_id}")
 def analyze_station(station_id: str):
     try:
         return analysis_service.get_station_analysis(station_id)
 
+    except LookupError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No analysis data found for station '{station_id}'."
+        )
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            detail=f"Invalid station ID format: {str(e)}"
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail=f"An unexpected error occurred while analysing station '{station_id}'."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# AI Explanation - Single Station
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/explain/station/{station_id}")
 def explain_station(station_id: str):
     try:
         return explanation_service.explain_station(station_id)
 
-    except ValueError as e:
+    except LookupError:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
+            status_code=404,
+            detail=f"No analysis data available to explain for station '{station_id}'. Run analysis first."
         )
 
-    except KeyError as e:
+    except ConnectionError:
         raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
+            status_code=503,
+            detail="Could not reach the AI explanation service. A local explanation was returned instead."
         )
 
-    except TypeError:
+    except TimeoutError:
         raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            status_code=504,
+            detail="The AI explanation service timed out. Please try again."
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail=f"An unexpected error occurred while generating the explanation for station '{station_id}'."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# AI Explanation - Network Overview
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/explain/overview")
 def explain_overview():
     try:
         return explanation_service.explain_overview()
 
-    except ValueError as e:
+    except LookupError:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
+            status_code=404,
+            detail="No overview data available to explain. Please run analysis first."
         )
 
-    except KeyError as e:
+    except ConnectionError:
         raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
+            status_code=503,
+            detail="Could not reach the AI explanation service. A local explanation was returned instead."
         )
 
-    except TypeError:
+    except TimeoutError:
         raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            status_code=504,
+            detail="The AI explanation service timed out. Please try again."
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while generating the network overview explanation."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Station Comparison
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/compare/{station_1}/{station_2}")
 def compare_stations(station_1: str, station_2: str):
     try:
+        if station_1.strip().lower() == station_2.strip().lower():
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot compare a station with itself. Please provide two different station IDs."
+            )
+
         return explanation_service.compare_stations(station_1, station_2)
 
-    except ValueError as e:
+    except HTTPException:
+        raise
+
+    except LookupError:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
+            status_code=404,
+            detail=f"One or both stations ('{station_1}', '{station_2}') have no analysis data. Run analysis first."
         )
 
-    except KeyError as e:
+    except ConnectionError:
         raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            status_code=503,
+            detail="Could not reach the AI explanation service. A local comparison was returned instead."
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail=f"An unexpected error occurred while comparing stations '{station_1}' and '{station_2}'."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Export - JSON Payload
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/export")
 def export_analysis_report(save_to_db: bool = False):
@@ -430,30 +417,22 @@ def export_analysis_report(save_to_db: bool = False):
     except HTTPException:
         raise
 
-    except ValueError as e:
+    except PermissionError:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            status_code=403,
+            detail="Permission denied while accessing report data."
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while building the export report."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Export - File Download (CSV / Excel)
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/export/download")
 def download_analysis_report(file_type: str = "csv"):
@@ -504,11 +483,9 @@ def download_analysis_report(file_type: str = "csv"):
             for column_cells in sheet.columns:
                 max_length = 0
                 column_letter = get_column_letter(column_cells[0].column)
-
                 for cell in column_cells:
                     value = str(cell.value) if cell.value is not None else ""
                     max_length = max(max_length, len(value))
-
                 sheet.column_dimensions[column_letter].width = min(max_length + 3, 45)
 
             stream = io.BytesIO()
@@ -524,7 +501,7 @@ def download_analysis_report(file_type: str = "csv"):
             )
 
         if normalized_file_type != "csv":
-            raise HTTPException(status_code=400, detail="Unsupported file type. Use csv or excel.")
+            raise HTTPException(status_code=400, detail="Unsupported file type. Use 'csv' or 'excel'.")
 
         output = io.StringIO()
         writer = csv.writer(output)
@@ -565,27 +542,19 @@ def download_analysis_report(file_type: str = "csv"):
     except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
-        )
-
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            detail=f"Invalid file type or report data: {str(e)}"
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while generating the download file."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Save Report to Database
+# ─────────────────────────────────────────────────────────────
 
 @router.post("/export/save")
 def save_analysis_report():
@@ -604,48 +573,48 @@ def save_analysis_report():
     except HTTPException:
         raise
 
-    except ValueError as e:
+    except ConnectionError:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid analysis input: {str(e)}"
+            status_code=503,
+            detail="Could not connect to the database to save the report. Please try again."
         )
 
-    except KeyError as e:
+    except PermissionError:
         raise HTTPException(
-            status_code=500,
-            detail=f"Missing required analysis field: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid analysis data format"
+            status_code=403,
+            detail="Permission denied when writing the report to the database."
         )
 
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unexpected analysis service error"
+            detail="An unexpected error occurred while saving the report to the database."
         )
 
+
+# ─────────────────────────────────────────────────────────────
+# Clear Cache
+# ─────────────────────────────────────────────────────────────
 
 @router.get("/clear-cache")
 def clear_cache():
     try:
         analysis_result = analysis_service.clear_cache()
         explanation_service.clear_explanation_cache()
+
         return {
             "message": "All caches cleared successfully",
             "analysis": analysis_result,
         }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid analysis input: {str(e)}")
 
-    except KeyError as e:
-        raise HTTPException(status_code=500, detail=f"Missing required analysis field: {str(e)}")
-
-    except TypeError:
-        raise HTTPException(status_code=500, detail="Invalid analysis data format")
+    except AttributeError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cache clearing failed - service not properly initialised: {str(e)}"
+        )
 
     except Exception:
-        raise HTTPException(status_code=500, detail="Unexpected error occurred while processing analysis request")
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred while clearing the analysis cache."
+        )

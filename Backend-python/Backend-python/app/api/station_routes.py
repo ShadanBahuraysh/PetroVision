@@ -82,22 +82,5 @@ def get_stations(query: str = "Petromin station Saudi Arabia"):
     except requests.RequestException as e:
         raise HTTPException(status_code=502, detail=f"Google Maps request failed: {str(e)}")
 
-    except KeyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing station information: {str(e)}"
-        )
-
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid station input: {str(e)}"
-        )
-
-    except TypeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Invalid station request format"
-        )
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")

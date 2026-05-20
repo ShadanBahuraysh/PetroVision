@@ -28,6 +28,7 @@ import 'success_screen.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'admin_job_verification_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -84,6 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = json.decode(response.body);
         final role = data['user']?['role'] ?? 'customer';
         final userId = data['user']?['user_id'] ?? '';
+        // Persist the logged-in userId so other screens can read it
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('logged_in_user_id', userId);
 
         Navigator.push(
           context,

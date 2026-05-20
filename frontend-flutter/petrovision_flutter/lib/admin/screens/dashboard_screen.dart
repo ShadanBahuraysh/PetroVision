@@ -27,8 +27,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
+import '../utils/download_helper.dart';
 
 import '../models/dashboard_models.dart';
 import '../widgets/admin_shell.dart';
@@ -1192,13 +1192,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final extension = fileType == 'excel' ? 'xlsx' : 'csv';
       final fileName =
           'petrovision_analysis_report_${DateTime.now().millisecondsSinceEpoch}.$extension';
-      final userProfile = Platform.environment['USERPROFILE'];
-      final downloadsPath = userProfile == null || userProfile.isEmpty
-          ? Directory.current.path
-          : '$userProfile\\Downloads';
-      final file = File('$downloadsPath\\$fileName');
 
-      await file.writeAsBytes(Uint8List.fromList(res.bodyBytes), flush: true);
+      await saveFileToDevice(res.bodyBytes, fileName);
 
       if (!mounted) return;
       ScaffoldMessenger.of(

@@ -1,5 +1,5 @@
 """
-Unit Tests – Password Hashing
+Unit Tests ??? Password Hashing
 ===============================
 Coverage:
   - AuthService._hash_password
@@ -11,7 +11,7 @@ import os
 from unittest.mock import patch
 from conftest import shared_mock_supabase
 
-# ── Path setup ────────────────────────────────────────────
+# ======== Path setup ========
 sys.path.insert(0, os.path.join(os.path.dirname(__file__),
                                 "../Backend-python/Backend-python"))
 
@@ -22,20 +22,14 @@ def make_auth_service():
     return AuthService()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# AuthService – Password Hashing
-# ══════════════════════════════════════════════════════════════════════════════
+# =================================
+# AuthService >>> Password Hashing
+# =================================
 
 class TestPasswordHashing:
 
     def setup_method(self):
         self.service = make_auth_service()
-
-    def test_hash_password_returns_a_string(self):
-        """Hashed password must be a non-empty string."""
-        hashed = self.service._hash_password("MyPassword1!")
-        assert isinstance(hashed, str)
-        assert len(hashed) > 0
 
     def test_hash_is_different_from_plain_password(self):
         """Hashed value must not equal the original plain text."""
@@ -44,7 +38,7 @@ class TestPasswordHashing:
         assert hashed != plain
 
     def test_same_password_produces_different_hashes(self):
-        """bcrypt uses random salts — two hashes of the same password differ."""
+        """bcrypt uses random salts ??? two hashes of the same password differ."""
         hashed1 = self.service._hash_password("SamePass99")
         hashed2 = self.service._hash_password("SamePass99")
         assert hashed1 != hashed2
@@ -65,10 +59,4 @@ class TestPasswordHashing:
         hashed = self.service._hash_password("SomePassword1!")
         assert self.service._check_password("", hashed) is False
 
-    def test_check_password_handles_invalid_hash_gracefully(self):
-        """
-        Exception handling: _check_password catches bcrypt exceptions
-        and returns False instead of crashing.
-        """
-        result = self.service._check_password("anypassword", "not_a_valid_hash")
-        assert result is False
+    

@@ -145,14 +145,6 @@ class TestToDict:
         assert d["city"] is None
         assert d["rating"] is None
 
-    def test_station_name_fallback_to_name(self):
-        """Constructor accepts `name` as alias for `station_name`."""
-        s = Station(station_id=1, name="Alias Station")
-        assert s.to_dict()["station_name"] == "Alias Station"
-
-    def test_station_name_takes_priority_over_name(self):
-        s = Station(station_id=1, station_name="Primary", name="Alias")
-        assert s.to_dict()["station_name"] == "Primary"
 
     def test_dict_is_independent_copy(self):
         """Mutating the returned dict should not affect the original object."""

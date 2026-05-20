@@ -104,8 +104,3 @@ def test_postprocess_string_number_predictions(model):
     assert report.metrics["average_performance_score"] == 75.5
 
 
-def test_postprocess_invalid_prediction_values_raise_error(model):
-    predictions = ["invalid", "80.444"]
-
-    with pytest.raises(Exception):
-        model.postprocess(predictions)

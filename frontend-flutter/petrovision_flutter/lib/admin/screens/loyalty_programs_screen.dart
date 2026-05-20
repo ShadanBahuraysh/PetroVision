@@ -266,10 +266,35 @@ class _LoyaltyProgramsScreenState extends State<LoyaltyProgramsScreen> {
     final isEdit     = existing != null;
     final nameCtrl   = TextEditingController(text: existing?.name ?? '');
     String category  = existing?.category ?? 'Fuel';
-    final earnCtrl   = TextEditingController(text: existing?.earnPts.toString() ?? '');
-    final redeemCtrl = TextEditingController(text: existing?.redeemPts.toString() ?? '');
-    final tierCtrl   = TextEditingController(text: existing?.minTier ?? 'Bronze');
+    final earnCtrl   = TextEditingController(text: existing != null ? existing.earnPts.toString() : '');
+    final redeemCtrl = TextEditingController(text: existing != null ? existing.redeemPts.toString() : '');
+    String minTier   = existing?.minTier ?? 'Bronze';
     String status    = existing?.status ?? 'Active';
+
+    // Per-field error strings
+    String? nameError;
+    String? earnError;
+    String? redeemError;
+
+    // ── Validators (closures — required for Flutter Web / JS) ──────────────────
+    final validateName = (String value) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return 'Offer name is required.';
+      if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(trimmed)) return 'Name must contain letters only — no numbers or special characters.';
+      final isDuplicate = _offers.any((o) =>
+          o.name.trim().toLowerCase() == trimmed.toLowerCase() &&
+          o.offerId != existing?.offerId);
+      if (isDuplicate) return 'An offer with this name already exists.';
+      return null;
+    };
+
+    final validatePoints = (String value, String fieldLabel) {
+      if (value.trim().isEmpty) return '$fieldLabel is required.';
+      final parsed = int.tryParse(value.trim());
+      if (parsed == null) return '$fieldLabel must be a whole number.';
+      if (parsed < 0) return '$fieldLabel cannot be negative.';
+      return null;
+    };
 
     await showDialog(
       context: context,
@@ -278,6 +303,8 @@ class _LoyaltyProgramsScreenState extends State<LoyaltyProgramsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(width: 520, padding: const EdgeInsets.all(28),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+            // ── Header ───────────────────────────────────────────────────────
             Row(children: [
               Expanded(child: Text(isEdit ? 'Edit Offer' : 'Add Offer',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF132935)))),
@@ -285,98 +312,120 @@ class _LoyaltyProgramsScreenState extends State<LoyaltyProgramsScreen> {
                   icon: const Icon(Icons.close_rounded, color: Color(0xFF8A959E))),
             ]),
             const SizedBox(height: 20),
-            Row(children: [
-              Expanded(child: _dlgField('Offer Name', nameCtrl)),
+
+            // ── Row 1: Name + Category ────────────────────────────────────────
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: _dlgFieldValidated(
+                label: 'Offer Name',
+                ctrl: nameCtrl,
+                errorText: nameError,
+                onChanged: (v) => set(() => nameError = validateName(v)),
+              )),
               const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Category', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF374151))),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(color: const Color(0xFFF6F7F9), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE5E7EB))),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: category, isExpanded: true, dropdownColor: Colors.white,
-                      style: const TextStyle(color: Color(0xFF132935), fontWeight: FontWeight.w600, fontSize: 14),
-                      items: ['Fuel','Coffee','Food','Services','Bonus','Other']
-                          .map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (v) { if (v != null) set(() => category = v); },
-                    ),
-                  ),
-                ),
-              ])),
+              Expanded(child: _dlgDropdown(
+                label: 'Category',
+                value: category,
+                items: ['Fuel','Coffee','Food','Services','Bonus','Other'],
+                onChanged: (v) { if (v != null) set(() => category = v); },
+              )),
             ]),
             const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _dlgField('Earn Points', earnCtrl, isNumber: true)),
+
+            // ── Row 2: Earn pts + Redeem pts ──────────────────────────────────
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: _dlgFieldValidated(
+                label: 'Earn Points',
+                ctrl: earnCtrl,
+                isNumber: true,
+                errorText: earnError,
+                hint: '0 or more',
+                onChanged: (v) => set(() => earnError = validatePoints(v, 'Earn Points')),
+              )),
               const SizedBox(width: 12),
-              Expanded(child: _dlgField('Redeem Points', redeemCtrl, isNumber: true)),
+              Expanded(child: _dlgFieldValidated(
+                label: 'Redeem Points',
+                ctrl: redeemCtrl,
+                isNumber: true,
+                errorText: redeemError,
+                hint: '0 or more',
+                onChanged: (v) => set(() => redeemError = validatePoints(v, 'Redeem Points')),
+              )),
             ]),
             const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _dlgField('Min Tier', tierCtrl)),
+
+            // ── Row 3: Min Tier dropdown + Status dropdown ────────────────────
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: _dlgDropdown(
+                label: 'Min Tier',
+                value: minTier,
+                items: ['Bronze', 'Silver', 'Gold'],
+                onChanged: (v) { if (v != null) set(() => minTier = v); },
+              )),
               const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Status', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF374151))),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(color: const Color(0xFFF6F7F9), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE5E7EB))),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: status, isExpanded: true, dropdownColor: Colors.white,
-                      style: const TextStyle(color: Color(0xFF132935), fontWeight: FontWeight.w600, fontSize: 14),
-                      items: ['Active','Draft','Paused','Inactive'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                      onChanged: (v) { if (v != null) set(() => status = v); },
-                    ),
-                  ),
-                ),
-              ])),
+              Expanded(child: _dlgDropdown(
+                label: 'Status',
+                value: status,
+                items: ['Active','Draft','Paused','Inactive'],
+                onChanged: (v) { if (v != null) set(() => status = v); },
+              )),
             ]),
             const SizedBox(height: 24),
+
+            // ── Actions ───────────────────────────────────────────────────────
             Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              OutlinedButton(onPressed: () => Navigator.pop(ctx), style: outlinedDesktopButtonStyle(), child: const Text('Cancel')),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: outlinedDesktopButtonStyle(),
+                child: const Text('Cancel'),
+              ),
               const SizedBox(width: 12),
               FilledButton(
                 style: darkDesktopButtonStyle(),
                 onPressed: () async {
-                  if (nameCtrl.text.trim().isEmpty) return;
-                  Navigator.pop(ctx);
-                  final body = jsonEncode({
-                    'name':           nameCtrl.text.trim(),
-                    'category':       category,
-                    'earn_points':    int.tryParse(earnCtrl.text) ?? 0,
-                    'redeem_points':  int.tryParse(redeemCtrl.text) ?? 0,
-                    'min_tier':       tierCtrl.text.trim().isEmpty ? 'Bronze' : tierCtrl.text.trim(),
-                    'offer_type':     category,
-                    'status':         status,
+                  // Run all validators on submit
+                  set(() {
+                    nameError   = validateName(nameCtrl.text);
+                    earnError   = validatePoints(earnCtrl.text, 'Earn Points');
+                    redeemError = validatePoints(redeemCtrl.text, 'Redeem Points');
                   });
+                  if (nameError != null || earnError != null || redeemError != null) return;
+
+                  Navigator.pop(ctx);
+
+                  final body = jsonEncode({
+                    'name':          nameCtrl.text.trim(),
+                    'category':      category,
+                    'earn_points':   int.parse(earnCtrl.text.trim()),
+                    'redeem_points': int.parse(redeemCtrl.text.trim()),
+                    'min_tier':      minTier,
+                    'offer_type':    category,
+                    'status':        status,
+                  });
+
                   final res = existing != null && existing.offerId != null
-                  ? await http.put(
-                      Uri.parse('$_baseUrl/offers/${existing.offerId}'),
-                      headers: {'Content-Type': 'application/json'},
-                      body: body,
-                    )
-                  : await http.post(
-                      Uri.parse('$_baseUrl/offers/'),
-                      headers: {'Content-Type': 'application/json'},
-                      body: body,
+                      ? await http.put(
+                          Uri.parse('$_baseUrl/offers/${existing.offerId}'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: body,
+                        )
+                      : await http.post(
+                          Uri.parse('$_baseUrl/offers/'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: body,
+                        );
+
+                  if (!mounted) return;
+
+                  if (res.statusCode == 200 || res.statusCode == 201) {
+                    _loadOffers();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(isEdit ? 'Offer updated successfully.' : 'Offer created successfully.')),
                     );
-
-                if (!mounted) return;
-
-                if (res.statusCode == 200 || res.statusCode == 201) {
-                  _loadOffers();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isEdit ? 'Offer updated successfully.' : 'Offer created successfully.'),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Failed to save offer.')),
-                  );
-                }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to save offer. (${res.statusCode})')),
+                    );
+                  }
                 },
                 child: Text(isEdit ? 'Update' : 'Save'),
               ),
@@ -387,18 +436,86 @@ class _LoyaltyProgramsScreenState extends State<LoyaltyProgramsScreen> {
     );
   }
 
-  Widget _dlgField(String label, TextEditingController ctrl, {bool isNumber = false}) {
+  Widget _dlgFieldValidated(
+      {required String label,
+      required TextEditingController ctrl,
+      bool isNumber = false,
+      String? errorText,
+      String? hint,
+      void Function(String)? onChanged}) {
+    final hasError = errorText != null;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF374151))),
+      Row(children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF374151))),
+        const Text(' *', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFEF4444))),
+      ]),
       const SizedBox(height: 8),
       TextField(
-        controller: ctrl, keyboardType: isNumber ? TextInputType.number : null,
+        controller: ctrl,
+        keyboardType: isNumber ? TextInputType.number : null,
+        onChanged: onChanged,
         style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF132935)),
         decoration: InputDecoration(
-          filled: true, fillColor: const Color(0xFFF6F7F9),
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFFB0B8C1), fontSize: 13),
+          filled: true,
+          fillColor: hasError ? const Color(0xFFFFF1F1) : const Color(0xFFF6F7F9),
           contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF4195AF), width: 1.5)),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: hasError
+                  ? const BorderSide(color: Color(0xFFEF4444), width: 1.5)
+                  : BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: hasError ? const Color(0xFFEF4444) : const Color(0xFF4195AF),
+                  width: 1.5)),
+          errorText: null, // we render it manually below
+        ),
+      ),
+      if (hasError) ...[
+        const SizedBox(height: 5),
+        Row(children: [
+          const Icon(Icons.error_outline_rounded, size: 13, color: Color(0xFFEF4444)),
+          const SizedBox(width: 4),
+          Expanded(child: Text(errorText, style: const TextStyle(fontSize: 11, color: Color(0xFFEF4444)))),
+        ]),
+      ],
+    ]);
+  }
+
+  Widget _dlgDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF374151))),
+        const Text(' *', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFFEF4444))),
+      ]),
+      const SizedBox(height: 8),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6F7F9),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            dropdownColor: Colors.white,
+            style: const TextStyle(color: Color(0xFF132935), fontWeight: FontWeight.w600, fontSize: 14),
+            items: items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+            onChanged: onChanged,
+          ),
         ),
       ),
     ]);
