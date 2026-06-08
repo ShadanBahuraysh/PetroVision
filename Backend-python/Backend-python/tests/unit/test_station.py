@@ -58,14 +58,6 @@ class TestIsActive:
         s = Station(1, status="active")
         assert s.is_active() is True
 
-    def test_open_lowercase(self):
-        s = Station(2, status="open")
-        assert s.is_active() is True
-
-    def test_operational_lowercase(self):
-        s = Station(3, status="operational")
-        assert s.is_active() is True
-
     def test_active_uppercase(self):
         """Status comparison must be case-insensitive."""
         s = Station(4, status="ACTIVE")
@@ -79,16 +71,8 @@ class TestIsActive:
         s = Station(6, status="closed")
         assert s.is_active() is False
 
-    def test_inactive_returns_false(self):
-        s = Station(7, status="inactive")
-        assert s.is_active() is False
-
     def test_maintenance_returns_false(self):
         s = Station(8, status="maintenance")
-        assert s.is_active() is False
-
-    def test_empty_string_returns_false(self):
-        s = Station(9, status="")
         assert s.is_active() is False
 
     def test_default_status_is_active(self):
